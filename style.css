@@ -53,31 +53,15 @@ body {
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     padding: 22px 18px 20px;
     border-bottom: 1px solid rgba(255,255,255,0.12);
 }
-.brand-d {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 300;
-    color: #fff;
-    line-height: 1;
-    width: 32px;
-    text-align: center;
-}
-.brand-text { display: flex; flex-direction: column; }
-.brand-name {
-    font-size: 11px;
-    font-weight: 500;
-    color: #fff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-.brand-sub {
-    font-size: 10px;
-    color: rgba(255,255,255,0.55);
-    letter-spacing: .5px;
+.brand-logo {
+    display: block;
+    max-width: 160px;
+    width: 100%;
+    height: auto;
 }
 .nav { display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; flex: 1; }
 .nav-item {
