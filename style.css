@@ -2,17 +2,17 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-    --rose:       #8B3A2A;
-    --rose-m:     #C4785A;
-    --rose-l:     #F2D9D0;
-    --rose-xl:    #FAF0EC;
-    --ink:        #1C1410;
-    --ink-m:      #4A3428;
-    --ink-l:      #8A7060;
-    --surface:    #FFFCF9;
-    --surface-2:  #F7F1EB;
-    --border:     rgba(139,58,42,0.12);
-    --border-m:   rgba(139,58,42,0.22);
+    --rose:       #6B5847;
+    --rose-m:     #9B8676;
+    --rose-l:     #E5DBD0;
+    --rose-xl:    #F8F3EC;
+    --ink:        #2B2520;
+    --ink-m:      #5C4D42;
+    --ink-l:      #8F7F72;
+    --surface:    #FDFBF7;
+    --surface-2:  #F4EEE6;
+    --border:     rgba(107,88,71,0.12);
+    --border-m:   rgba(107,88,71,0.22);
     --green:      #2D6A4F;
     --green-l:    #D8F0E4;
     --yellow:     #92650A;
