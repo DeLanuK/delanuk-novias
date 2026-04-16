@@ -1,203 +1,198 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DELANUK · Novias a Medida</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DELANUK · Novias a Medida</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  </head>
+</head>
 <body>
-  <!-- LOGIN SCREEN -->
+
   <div id="login-screen" class="login-screen">
-      <div class="login-card">
-            <div class="login-brand">
-                    <span class="login-d">D</span>span>
-                    <div class="login-brand-text">
-                              <span class="login-name">DELANUK</span>span>
-                              <span class="login-sub">Novias a Medida</span>span>
-                    </div>div>
-            </div>div>
-            <p class="login-title">Ingresá a tu panel</p>p>
-            <form id="login-form" class="login-form">
-                    <div class="fg"><label>Email</label><input id="login-email" type="email" autocomplete="username" required></div>div>
-                  <div class="fg"><label>Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required></div>div>
-                  <div id="login-error" class="login-error"></div>div>
-                  <button type="submit" class="btn-primary login-btn" id="login-submit">Ingresar</button>button>
-            </form>form>
-      </div>div>
-  </div>div>
-<div id="app" style="display:none">
-  <aside class="sidebar">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-d">D</span>
+        <div class="login-brand-text">
+          <span class="login-name">DELANUK</span>
+          <span class="login-sub">Novias a Medida</span>
+        </div>
+      </div>
+      <p class="login-title">Ingresá a tu panel</p>
+      <form id="login-form" class="login-form">
+        <div class="fg"><label>Email</label><input id="login-email" type="email" autocomplete="username" required></div>
+        <div class="fg"><label>Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+        <div id="login-error" class="login-error"></div>
+        <button type="submit" class="btn-primary login-btn" id="login-submit">Ingresar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
+    <aside class="sidebar">
       <div class="brand">
-            <span class="brand-d">D</span>span>
-            <div class="brand-text"><span class="brand-name">DELANUK</span>span><span class="brand-sub">Novias a Medida</span>span></div>div>
-      </div>div>
+        <span class="brand-d">D</span>
+        <div class="brand-text"><span class="brand-name">DELANUK</span><span class="brand-sub">Novias a Medida</span></div>
+      </div>
       <nav class="nav">
-            <button class="nav-item active" data-view="dashboard">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>svg>
-                    Panel
-            </button>button>
-            <button class="nav-item" data-view="novias">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>svg>
-                    Novias
-            </button>button>
-            <button class="nav-item" data-view="pagos">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>svg>
-                    Pagos
-            </button>button>
-      </nav>nav>
+        <button class="nav-item active" data-view="dashboard">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Panel
+        </button>
+        <button class="nav-item" data-view="novias">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+          Novias
+        </button>
+        <button class="nav-item" data-view="pagos">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          Pagos
+        </button>
+      </nav>
       <div class="sidebar-footer">
-            <button class="btn-add-side" id="btn-add-side">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>svg>
-                    Nueva novia
-            </button>button>
-            <div class="user-info">
-                    <span class="user-email" id="user-email"></span>span>
-                    <button class="logout-btn" id="btn-logout" title="Cerrar sesión">
-                              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>svg>
-                    </button>button>
-            </div>div>
-      </div>div>
-  </aside>aside>
-  <main class="main">
-      <!-- DASHBOARD -->
+        <button class="btn-add-side" id="btn-add-side">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Nueva novia
+        </button>
+        <div class="user-info">
+          <span class="user-email" id="user-email"></span>
+          <button class="logout-btn" id="btn-logout" title="Cerrar sesión">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
       <section class="view active" id="view-dashboard">
-            <div class="page-header">
-                    <div>
-                                <h1 class="page-title">Panel</h1>h1>
-                                <p class="page-sub" id="dash-subtitle">Cargando...</p>p>
-                    </div>
-                      <button class="btn-primary" id="btn-add-dash">+ Nueva novia</button>button>
-            </div>
-              <div class="kpi-row" id="kpi-row"></div>
-              <div class="section-label">Novias activas · orden cronológico</div>
-              <div class="table-wrap">
-                        <table>
-                                    <thead><tr>
-                                                  <th>Novia</th><th>Boda</th><th>Estado</th><th>Piezas</th><th>Responsable</th><th>Saldo</th><th></th>
-                                    </tr></thead>
-                                  <tbody id="dash-tbody"></tbody>tbody>
-                        </table>
-              </div>
-      </section>section>
-      <!-- NOVIAS -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Panel</h1>
+            <p class="page-sub" id="dash-subtitle">Cargando...</p>
+          </div>
+          <button class="btn-primary" id="btn-add-dash">+ Nueva novia</button>
+        </div>
+        <div class="kpi-row" id="kpi-row"></div>
+        <div class="section-label">Novias activas · orden cronológico</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Novia</th><th>Boda</th><th>Estado</th><th>Piezas</th><th>Responsable</th><th>Saldo</th><th></th>
+            </tr></thead>
+            <tbody id="dash-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="view" id="view-novias">
-            <div class="page-header">
-                    <div>
-                              <h1 class="page-title">Novias</h1>h1>
-                              <p class="page-sub">Registro completo</p>p>
-                    </div>
-                    <button class="btn-primary" id="btn-add-novias">+ Nueva novia</button>button>
-            </div>
-            <div class="toolbar">
-                    <div class="search-wrap">
-                              <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>svg>
-                              <input type="text" id="search" placeholder="Buscar por nombre, ciudad, pieza..." oninput="renderNovias()">
-                    </div>
-                    <select id="filter-estado" onchange="renderNovias()">
-                              <option value="">Todos los estados</option>option>
-                              <option>Pendiente</option>
-                              <option>Propuesta enviada</option>
-                              <option>Confirmado</option>
-                              <option>Producción</option>
-                    </select>select>
-            </div>
-            <div class="table-wrap">
-                    <table>
-                              <thead><tr>
-                                            <th>Novia</th><th>Fecha boda</th><th>Ciudad</th><th>Piezas</th><th>Estado</th><th>Pago</th><th></th>
-                              </tr></thead>
-                              <tbody id="novias-tbody"></tbody>tbody>
-                    </table>
-            </div>
-      </section>section>
-      <!-- PAGOS -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Novias</h1>
+            <p class="page-sub">Registro completo</p>
+          </div>
+          <button class="btn-primary" id="btn-add-novias">+ Nueva novia</button>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="search" placeholder="Buscar por nombre, ciudad, pieza..." oninput="renderNovias()">
+          </div>
+          <select id="filter-estado" onchange="renderNovias()">
+            <option value="">Todos los estados</option>
+            <option>Pendiente</option>
+            <option>Propuesta enviada</option>
+            <option>Confirmado</option>
+            <option>Producción</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Novia</th><th>Fecha boda</th><th>Ciudad</th><th>Piezas</th><th>Estado</th><th>Pago</th><th></th>
+            </tr></thead>
+            <tbody id="novias-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="view" id="view-pagos">
-            <div class="page-header">
-                    <div>
-                              <h1 class="page-title">Pagos</h1>h1>
-                              <p class="page-sub">Control de cobros y saldos</p>p>
-                    </div>
-            </div>
-            <div class="kpi-row" id="kpi-pagos"></div>
-            <div class="table-wrap" style="margin-top:20px">
-                    <table>
-                              <thead><tr>
-                                            <th>Novia</th><th>Total</th><th>Seña</th><th>F. seña</th><th>Saldo</th><th>Estado</th>
-                              </tr></thead>
-                              <tbody id="pagos-tbody"></tbody>tbody>
-                    </table>
-            </div>
-      </section>section>
-  </main>main>
-</div>
-<!-- MODAL FORM -->
-<div class="overlay" id="overlay-form">
-  <div class="modal">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Pagos</h1>
+            <p class="page-sub">Control de cobros y saldos</p>
+          </div>
+        </div>
+        <div class="kpi-row" id="kpi-pagos"></div>
+        <div class="table-wrap" style="margin-top:20px">
+          <table>
+            <thead><tr>
+              <th>Novia</th><th>Total</th><th>Seña</th><th>F. seña</th><th>Saldo</th><th>Estado</th>
+            </tr></thead>
+            <tbody id="pagos-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="overlay" id="overlay-form">
+    <div class="modal">
       <div class="modal-head">
-            <h2 id="modal-form-title">Nueva novia</h2>h2>
-            <button class="close-btn" onclick="closeModal('form')">x</button>button>
+        <h2 id="modal-form-title">Nueva novia</h2>
+        <button class="close-btn" onclick="closeModal('form')">×</button>
       </div>
       <div class="form-scroll">
-            <div class="form-section-label">Datos personales</div>
-            <div class="form-grid">
-                    <div class="fg"><label>Nombre completo *</label><input id="f-nombre" type="text" placeholder="Valentina García"></div>
-                    <div class="fg"><label>Fecha de boda</label><input id="f-fecha" type="text" placeholder="15/08/2026"></div>
-                    <div class="fg"><label>Teléfono / WhatsApp</label><input id="f-tel" type="text" placeholder="351..."></div>
-                    <div class="fg"><label>Instagram</label><input id="f-ig" type="text" placeholder="@usuario"></div>
-                    <div class="fg"><label>Ciudad</label><input id="f-ciudad" type="text" placeholder="Córdoba"></div>
-                    <div class="fg"><label>Tipo de boda</label>
-                              <select id="f-tipo"><option>Iglesia y fiesta</option><option>Civil y fiesta</option><option>Civil</option><option>Fiesta</option><option>Civil, fiesta y post boda</option><option>Ceremonia judía y fiesta</option></select>select>
-                    </div>
-                    <div class="fg"><label>Rol</label>
-                              <select id="f-rol"><option>Novia</option><option>Madrina</option><option>Hermana</option><option>Madre</option><option>Invitada</option></select>select>
-                    </div>
-                    <div class="fg"><label>Responsable</label>
-                              <select id="f-resp"><option value="">— Sin asignar —</option><option>Lucía</option><option>Marina</option><option>Equipo</option></select>select>
-                    </div>
-            </div>
-            <div class="form-section-label" style="margin-top:18px">Estado y piezas</div>
-            <div class="form-grid">
-                    <div class="fg"><label>Estado</label>
-                              <select id="f-estado"><option>Pendiente</option><option>Propuesta enviada</option><option>Confirmado</option><option>Producción</option></select>select>
-                    </div>
-                    <div class="fg"><label>Monto total ($)</label><input id="f-total" type="number" placeholder="0"></div>
-                    <div class="fg"><label>Seña abonada ($)</label><input id="f-sena" type="number" placeholder="0"></div>
-                    <div class="fg"><label>Fecha seña</label><input id="f-fsena" type="text" placeholder="dd/mm"></div>
-                    <div class="fg full"><label>Piezas encargadas</label><textarea id="f-piezas" rows="3" placeholder="Aros Mistral plata + tocado con perlas..."></textarea></div>
-                    <div class="fg full"><label>Notas internas</label><textarea id="f-notas" rows="2" placeholder="Referencias, vestido, observaciones..."></textarea></div>
-            </div>
+        <div class="form-section-label">Datos personales</div>
+        <div class="form-grid">
+          <div class="fg"><label>Nombre completo *</label><input id="f-nombre" type="text" placeholder="Valentina García"></div>
+          <div class="fg"><label>Fecha de boda</label><input id="f-fecha" type="text" placeholder="15/08/2026"></div>
+          <div class="fg"><label>Teléfono / WhatsApp</label><input id="f-tel" type="text" placeholder="351..."></div>
+          <div class="fg"><label>Instagram</label><input id="f-ig" type="text" placeholder="@usuario"></div>
+          <div class="fg"><label>Ciudad</label><input id="f-ciudad" type="text" placeholder="Córdoba"></div>
+          <div class="fg"><label>Tipo de boda</label>
+            <select id="f-tipo"><option>Iglesia y fiesta</option><option>Civil y fiesta</option><option>Civil</option><option>Fiesta</option><option>Civil, fiesta y post boda</option><option>Ceremonia judía y fiesta</option></select>
+          </div>
+          <div class="fg"><label>Rol</label>
+            <select id="f-rol"><option>Novia</option><option>Madrina</option><option>Hermana</option><option>Madre</option><option>Invitada</option></select>
+          </div>
+          <div class="fg"><label>Responsable</label>
+            <select id="f-resp"><option value="">— Sin asignar —</option><option>Lucía</option><option>Marina</option><option>Equipo</option></select>
+          </div>
+        </div>
+        <div class="form-section-label" style="margin-top:18px">Estado y piezas</div>
+        <div class="form-grid">
+          <div class="fg"><label>Estado</label>
+            <select id="f-estado"><option>Pendiente</option><option>Propuesta enviada</option><option>Confirmado</option><option>Producción</option></select>
+          </div>
+          <div class="fg"><label>Monto total ($)</label><input id="f-total" type="number" placeholder="0"></div>
+          <div class="fg"><label>Seña abonada ($)</label><input id="f-sena" type="number" placeholder="0"></div>
+          <div class="fg"><label>Fecha seña</label><input id="f-fsena" type="text" placeholder="dd/mm"></div>
+          <div class="fg full"><label>Piezas encargadas</label><textarea id="f-piezas" rows="3" placeholder="Aros Mistral plata + tocado con perlas..."></textarea></div>
+          <div class="fg full"><label>Notas internas</label><textarea id="f-notas" rows="2" placeholder="Referencias, vestido, observaciones..."></textarea></div>
+        </div>
       </div>
       <div class="modal-foot">
-            <button class="btn-ghost" onclick="closeModal('form')">Cancelar</button>button>
-            <button class="btn-primary" onclick="saveNovia()">Guardar</button>button>
+        <button class="btn-ghost" onclick="closeModal('form')">Cancelar</button>
+        <button class="btn-primary" onclick="saveNovia()">Guardar</button>
       </div>
+    </div>
   </div>
-</div>
-<!-- MODAL FICHA -->
-<div class="overlay" id="overlay-ficha">
-  <div class="modal modal-ficha">
+
+  <div class="overlay" id="overlay-ficha">
+    <div class="modal modal-ficha">
       <div class="modal-head">
-            <h2 id="ficha-name">Ficha</h2>h2>
-            <button class="close-btn" onclick="closeModal('ficha')">x</button>button>
+        <h2 id="ficha-name">Ficha</h2>
+        <button class="close-btn" onclick="closeModal('ficha')">×</button>
       </div>
       <div id="ficha-body" class="ficha-body"></div>
       <div class="modal-foot">
-            <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>button>
-            <button class="btn-primary" onclick="editFromFicha()">Editar</button>button>
+        <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
+        <button class="btn-primary" onclick="editFromFicha()">Editar</button>
       </div>
+    </div>
   </div>
-</div>
-<div class="toast" id="toast"></div>
-<script src="app.js"></script>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
 </body>
-</html>html></option></option></label></label></th></th>
-                              </tr></th></th>
-                              </tr></option></option></th></th>
-                                    </tr></thead>
-                        </table>
-                    </div></label></label>
-</body></title>
-  </head>
+</html>
