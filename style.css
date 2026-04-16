@@ -573,28 +573,13 @@ textarea { resize: vertical; }
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
     margin-bottom: 8px;
 }
-.login-d {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 40px;
-    font-weight: 300;
-    color: var(--rose);
-    line-height: 1;
-}
-.login-brand-text { display: flex; flex-direction: column; }
-.login-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-.login-sub {
-    font-size: 11px;
-    color: var(--ink-l);
-    letter-spacing: .5px;
+.login-logo {
+    display: block;
+    max-width: 220px;
+    width: 100%;
+    height: auto;
 }
 .login-title {
     text-align: center;
