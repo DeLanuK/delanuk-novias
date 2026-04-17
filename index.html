@@ -74,6 +74,9 @@
           </div>
           <button class="btn-primary" id="btn-add-dash">+ Nueva novia</button>
         </div>
+        <div class="search-bar-wrap">
+          <input class="search-bar" id="dash-search" type="search" placeholder="Buscar en panel..." oninput="dashSearch=this.value;renderDash()">
+        </div>
         <div class="kpi-row" id="kpi-row"></div>
         <div class="section-label">Novias activas · orden cronológico</div>
         <div class="table-wrap">
@@ -110,7 +113,7 @@
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Novia</th><th>Fecha boda</th><th>Ciudad</th><th>Piezas</th><th>Estado</th><th>Pago</th><th></th>
+              <th>Novia</th><th id="th-fecha" class="th-sort" onclick="noviaSort={col:'fecha',dir:noviaSort.col==='fecha'?-noviaSort.dir:1};renderNovias()">Fecha boda<span class="sort-arrow"> ↕</span></th><th>Ciudad</th><th>Piezas</th><th id="th-estado" class="th-sort" onclick="noviaSort={col:'estado',dir:noviaSort.col==='estado'?-noviaSort.dir:1};renderNovias()">Estado<span class="sort-arrow"> ↕</span></th><th>Pago</th><th id="th-saldo" class="th-sort" onclick="noviaSort={col:'saldo',dir:noviaSort.col==='saldo'?-noviaSort.dir:1};renderNovias()">Saldo<span class="sort-arrow"> ↕</span></th><th></th>
             </tr></thead>
             <tbody id="novias-tbody"></tbody>
           </table>
@@ -203,6 +206,7 @@
       </div>
       <div id="ficha-body" class="ficha-body"></div>
       <div class="modal-foot">
+        <button class="btn-danger" onclick="deleteNovia(fichaId)">Eliminar</button>
         <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
         <button class="btn-primary" onclick="editFromFicha()">Editar</button>
       </div>
