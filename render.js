@@ -219,7 +219,7 @@ function renderDash() {
     <div class="kpi-card"><div class="kpi-label">Novias activas</div><div class="kpi-val rose">${novias.length}</div></div>
     <div class="kpi-card"><div class="kpi-label">Pendientes accion</div><div class="kpi-val red">${pend}</div></div>
     <div class="kpi-card"><div class="kpi-label">Confirmadas</div><div class="kpi-val blue">${conf}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Saldo a cobrar</div><div class="kpi-val green">$${fmt(saldoTotal)}</div></div>
+    <div class="kpi-card admin-only"><div class="kpi-label">Saldo a cobrar</div><div class="kpi-val green">$${fmt(saldoTotal)}</div></div>
   `;
   const si = document.getElementById('dash-search');
   if (si && si.value !== window.AppState.dashSearch) si.value = window.AppState.dashSearch;
@@ -316,6 +316,27 @@ function renderPagos() {
       </tr>`);
   });
   renderGrafico();
+}
+function renderGrafico() {
+  const svg = document.getElementById('grafico-ingresos');
+  if (!svg) return;
+  const meses = ingresosUltimos6Meses(window.AppState.novias.filter(n => !n.archivada));
+  const max = Math.max(1, ...meses.map(m => m.total));
+  const W = 600, H = 200, pad = 24;
+  const slot = (W - pad * 2) / meses.length;
+  const barW = slot * 0.7, gap = slot * 0.3;
+  let html = '';
+  meses.forEach((m, i) => {
+    const x = pad + i * (barW + gap);
+    const h = (m.total / max) * (H - pad * 2);
+    const y = H - pad - h;
+    html += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="#6B5847" rx="3"/>`;
+    html += `<text x="${x + barW / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8F7F72">${m.label}</text>`;
+    if (m.total > 0) {
+      html += `<text x="${x + barW / 2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="#6B5847">$${fmt(m.total)}</text>`;
+    }
+  });
+  svg.innerHTML = html;
 }
 
 // ===== MODAL DE FORMULARIO =====
