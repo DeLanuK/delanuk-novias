@@ -102,10 +102,10 @@ body {
 
 /* ── MAIN ─────────────────────────────────────────────────────────────── */
 .main {
-    flex: 1;
-    overflow-y: auto;
-    padding: 28px 32px;
-    background: var(--surface);
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: #F4EEE6;
 }
 
 /* ── VIEWS ────────────────────────────────────────────────────────────── */
@@ -195,6 +195,7 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(107, 88, 71, 0.06);
 }
 .kpi-label {
     font-size: 10px;
@@ -255,6 +256,7 @@ body {
     border-radius: var(--radius-lg);
     overflow: hidden;
     overflow-x: auto;
+    box-shadow: 0 1px 3px rgba(107, 88, 71, 0.06);
 }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead { background: var(--rose-xl); }
