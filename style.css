@@ -777,3 +777,4 @@ body.is-staff .admin-only {
   height: 200px;
   display: block;
 }
+.hidden { display: none !important; }
