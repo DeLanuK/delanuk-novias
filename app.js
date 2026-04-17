@@ -194,7 +194,8 @@ async function loadNovias() {
     ...n,
     checklist: Array.isArray(n.checklist) && n.checklist.length ? n.checklist : mkCheck(0),
     pagos: Array.isArray(n.pagos) ? n.pagos : [],
-  }));
+  }));  window._novias = novias;
+
   renderDash();
   if (document.getElementById('view-novias').classList.contains('active')) renderNovias();
   if (document.getElementById('view-pagos').classList.contains('active')) renderPagos();
@@ -546,6 +547,57 @@ function editFromFicha() {
 document.querySelectorAll('.overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
+
+function exportCSV() {
+  // --- hoja 1: novias ---
+  const noviasHeaders = ['ID','Nombre','Fecha Boda','Estado','Ciudad','Tipo','Rol','Responsable','Total','Cobrado','Saldo','Tel','IG','Piezas','Notas'];
+  const noviasRows = window._novias.map(n => [
+    n.id,
+    n.nombre,
+    n.fecha,
+    n.estado,
+    n.ciudad,
+    n.tipo,
+    n.rol,
+    n.resp,
+    n.total,
+    n.sena,
+    n.total - n.sena,
+    n.tel,
+    n.ig,
+    n.piezas,
+    (n.notas||'').replace(/\n/g,' ')
+  ].map(v => '"'+(String(v||'').replace(/"/g,'""'))+'"').join(','));
+  const noviasCsv = [noviasHeaders.join(','), ...noviasRows].join('\n');
+
+  // --- hoja 2: pagos ---
+  const pagosHeaders = ['ID Novia','Nombre','Fecha Pago','Monto','Concepto'];
+  const pagosRows = [];
+  window._novias.forEach(n => {
+    (n.pagos||[]).forEach(p => {
+      pagosRows.push([
+        n.id,
+        n.nombre,
+        p.fecha,
+        p.monto,
+        (p.concepto||'').replace(/\n/g,' ')
+      ].map(v => '"'+(String(v||'').replace(/"/g,'""'))+'"').join(','));
+    });
+  });
+  const pagosCsv = [pagosHeaders.join(','), ...pagosRows].join('\n');
+
+  // Descargar novias.csv
+  const dl = (content, filename) => {
+    const blob = new Blob(['\uFEFF'+content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+  dl(noviasCsv, 'delanuk-novias.csv');
+  setTimeout(() => dl(pagosCsv, 'delanuk-pagos.csv'), 400);
+  showToast('CSVs generados ✓');
+}
 
 // INIT
 initAuth();
