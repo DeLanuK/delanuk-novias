@@ -88,6 +88,27 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2400);
 }
 
+function isUrgent(n) {
+  const d = parseDate(n.fecha);
+  if (d.getFullYear() >= 2099) return false;
+  const daysUntil = (d - new Date()) / 86400000;
+  const saldo = (n.total || 0) - (n.sena || 0);
+  return daysUntil >= 0 && daysUntil < 30 && saldo > 0;
+}
+
+function waLink(tel) {
+  const digits = (tel || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const full = digits.startsWith('54') ? digits : '549' + digits.replace(/^0/, '');
+  return 'https://wa.me/' + full;
+}
+
+function igLink(handle) {
+  if (!handle) return null;
+  const clean = handle.replace(/^@/, '').trim();
+  return clean ? 'https://instagram.com/' + clean : null;
+}
+
 // AUTH
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
@@ -218,7 +239,7 @@ function renderDash() {
     const saldo = n.total > 0 ? n.total - n.sena : null;
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
-        <td><span class="td-name">${escapeHtml(n.nombre)}</span></td>
+        <td><span class="td-name">${escapeHtml(n.nombre)}</span>${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}</td>
         <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
         <td>${badge(n.estado)}</td>
         <td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>
@@ -256,7 +277,7 @@ function renderNovias() {
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
         <td>
-          <span class="td-name">${escapeHtml(n.nombre)}</span>
+          <span class="td-name">${escapeHtml(n.nombre)}</span>${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}
           ${n.resp ? `<br><span class="td-muted">${escapeHtml(n.resp)}</span>` : ''}
         </td>
         <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
@@ -374,17 +395,24 @@ function openFicha(id) {
   const done = n.checklist.filter(c => c.done).length;
   const saldo = (n.total || 0) - (n.sena || 0);
 
+  const wa = waLink(n.tel);
+  const ig = igLink(n.ig);
   document.getElementById('ficha-name').textContent = n.nombre;
   document.getElementById('ficha-body').innerHTML = `
     <div class="ficha-hero">
       <div>
-        <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}</div>
+        <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}</div>
         <div class="ficha-hero-sub">
           ${escapeHtml(n.fecha) || 'Fecha a confirmar'} - ${escapeHtml(n.ciudad) || '-'} - ${escapeHtml(n.tipo) || '-'}<br>
           ${escapeHtml(n.rol || '')}${n.resp ? ' - Responsable: ' + escapeHtml(n.resp) : ''}
         </div>
       </div>
     </div>
+    ${(wa || ig) ? `<div class="ficha-sec">Contacto</div>
+      <div class="contact-row">
+        ${wa ? `<a class="chip chip-link" href="${wa}" target="_blank" rel="noopener">WhatsApp · ${escapeHtml(n.tel)}</a>` : ''}
+        ${ig ? `<a class="chip chip-link" href="${ig}" target="_blank" rel="noopener">Instagram · ${escapeHtml(n.ig)}</a>` : ''}
+      </div>` : ''}
     ${n.piezas ? `<div class="ficha-sec">Piezas encargadas</div><div class="ficha-piezas">${escapeHtml(n.piezas)}</div>` : ''}
     ${n.notas ? `<div class="ficha-sec">Notas internas</div><div class="ficha-notas">${escapeHtml(n.notas)}</div>` : ''}
     <div class="ficha-sec">Pago</div>
