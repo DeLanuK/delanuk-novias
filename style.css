@@ -226,6 +226,29 @@ body {
     margin-bottom: 10px;
 }
 
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .8rem;
+}
+.section-row .section-label { margin-bottom: 0; }
+.btn-export {
+  font-size: .72rem;
+  padding: .3rem .75rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  letter-spacing: .03em;
+  transition: background .18s, color .18s;
+}
+.btn-export:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* ── TABLE ────────────────────────────────────────────────────────────── */
 .table-wrap {
     border: 1px solid var(--border);
