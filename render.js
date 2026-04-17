@@ -8,6 +8,18 @@ const BADGE_CLASS = {
 };
 
 // ===== HELPERS GENERALES =====
+async function toggleArchivadas(checked) {
+  window.AppState.showArchived = !!checked;
+  try {
+    window.AppState.novias = await apiLoadNovias({ includeArchived: window.AppState.showArchived });
+    renderDash();
+    renderNovias();
+    renderPagos();
+  } catch (e) {
+    showToast('Error cargando novias');
+  }
+}
+window.toggleArchivadas = toggleArchivadas;
 const MONTHS = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12,nov:11,dic:12,feb:2,mar:3,abr:4};
 
 function parseDate(s) {
@@ -133,14 +145,14 @@ function renderRow(n, contexto) {
   const saldo = n.total > 0 ? n.total - n.sena : null;
   const next = nextAction(n);
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
+  const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
   const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
   const nextLine = next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : '';
 
   if (contexto === 'dashboard') {
     return `
       <tr>
-        <td><span class="td-name">${escapeHtml(n.nombre)}</span>${urg}</td>
-        <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
+<td><span class="td-name">${escapeHtml(n.nombre)}</span>${urg}${arch}</td>        <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
         <td>${badge(n.estado)}${nextLine}</td>
         ${piezasTd}
         <td><span class="td-muted">${escapeHtml(n.resp) || '-'}</span></td>
@@ -158,7 +170,7 @@ function renderRow(n, contexto) {
   return `
     <tr>
       <td>
-        <span class="td-name">${escapeHtml(n.nombre)}</span>${urg}
+        <span class="td-name">${escapeHtml(n.nombre)}</span>${urg}${arch}
         ${n.resp ? `<br><span class="td-muted">${escapeHtml(n.resp)}</span>` : ''}
       </td>
       <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
@@ -175,7 +187,7 @@ function renderRow(n, contexto) {
 
 // ===== DASHBOARD =====
 function renderDash() {
-  const novias = window.AppState.novias;
+  const novias = window.AppState.novias.filter(n => !n.archivada);
   const q = window.AppState.dashSearch.toLowerCase();
   const pend = novias.filter(n => n.estado === 'Pendiente').length;
   const conf = novias.filter(n => n.estado === 'Confirmado').length;
@@ -249,7 +261,7 @@ function renderNovias() {
 
 // ===== PAGOS =====
 function renderPagos() {
-  const novias = window.AppState.novias;
+  const novias = window.AppState.novias.filter(n => !n.archivada);
   const withPago = novias.filter(n => (n.total || 0) > 0 || (n.sena || 0) > 0);
   const totalM = withPago.reduce((a, n) => a + (n.total || 0), 0);
   const totalC = withPago.reduce((a, n) => a + (n.sena || 0), 0);

@@ -12,6 +12,7 @@ window.AppState = {
   realtimeChannel: null,
   noviaSort: { col: 'fecha', dir: 1 },
   dashSearch: '',
+  showArchived: false,
 };
 
 // ===== CONSTANTES DE DOMINIO =====
@@ -26,11 +27,14 @@ function mkCheck(doneTo) {
 }
 
 // ===== OPERACIONES SOBRE NOVIAS =====
-async function apiLoadNovias() {
-  const { data, error } = await sb.from('novias').select('*').order('id');
+async function apiLoadNovias({ includeArchived = false } = {}) {
+  let q = sb.from('novias').select('*').order('id');
+  if (!includeArchived) q = q.eq('archivada', false);
+  const { data, error } = await q;
   if (error) throw error;
   return data.map(n => ({
     ...n,
+    archivada: !!n.archivada,
     checklist: Array.isArray(n.checklist) && n.checklist.length ? n.checklist : mkCheck(0),
     pagos: Array.isArray(n.pagos) ? n.pagos : [],
   }));
@@ -38,6 +42,9 @@ async function apiLoadNovias() {
 async function apiInsertNovia(data)     { return sb.from('novias').insert(data); }
 async function apiUpdateNovia(id, data) { return sb.from('novias').update(data).eq('id', id); }
 async function apiDeleteNovia(id)       { return sb.from('novias').delete().eq('id', id); }
+async function apiSetArchivada(id, archivada) {
+  return sb.from('novias').update({ archivada }).eq('id', id);
+}
 
 function apiSubscribeRealtime(onChange) {
   if (window.AppState.realtimeChannel) sb.removeChannel(window.AppState.realtimeChannel);

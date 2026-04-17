@@ -750,3 +750,7 @@ textarea { resize: vertical; }
     background: rgba(0,0,0,0.05);
   }
 }
+.badge.b-archived {
+  background: #6b6b6b;
+  color: #fff;
+}

@@ -46,7 +46,7 @@ async function showApp(session) {
 
 async function loadNovias() {
   try {
-    window.AppState.novias = await apiLoadNovias();
+    window.AppState.novias = await apiLoadNovias({ includeArchived: window.AppState.showArchived });
     window._novias = window.AppState.novias; // compatibilidad con exportCSV
     renderDash();
     if (document.getElementById('view-novias').classList.contains('active')) renderNovias();
