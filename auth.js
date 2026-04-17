@@ -31,6 +31,12 @@ async function showApp(session) {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-email').textContent = session.user.email;
+  window.AppState.userEmail = session.user.email;
+window.AppState.isAdmin = (window.DELANUK_CONFIG.ADMIN_EMAILS || [])
+  .map(e => e.toLowerCase())
+  .includes((session.user.email || '').toLowerCase());
+document.body.classList.toggle('is-admin', window.AppState.isAdmin);
+document.body.classList.toggle('is-staff', !window.AppState.isAdmin);
 
   // 🎯 Si había un destino pendiente (link compartido antes del login),
   // lo restauramos en la URL antes de cargar los datos.

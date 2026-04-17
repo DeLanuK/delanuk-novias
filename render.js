@@ -79,6 +79,28 @@ function nextAction(n) {
   const item = n.checklist.find(c => !c.done);
   return item ? item.label : null;
 }
+function ingresosUltimos6Meses(novias) {
+  const hoy = new Date();
+  const meses = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    meses.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', ''),
+      year: d.getFullYear(),
+      total: 0,
+    });
+  }
+  novias.forEach(n => {
+    (n.pagos || []).forEach(p => {
+      if (!p.fecha) return;
+      const key = String(p.fecha).slice(0, 7); // 'YYYY-MM'
+      const m = meses.find(x => x.key === key);
+      if (m) m.total += (p.monto || 0);
+    });
+  });
+  return meses;
+}
 
 // ===== TEMPLATE DE WHATSAPP (PUNTO 9) =====
 function waMessage(n) {
@@ -293,6 +315,7 @@ function renderPagos() {
         <td>${estBadge}</td>
       </tr>`);
   });
+  renderGrafico();
 }
 
 // ===== MODAL DE FORMULARIO =====
