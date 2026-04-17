@@ -725,3 +725,28 @@ textarea { resize: vertical; }
         font-weight: 500;
     }
 }
+
+/* Botón de logout móvil (solo visible en pantallas chicas) */
+.mobile-logout {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .mobile-logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-left: 8px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: transparent;
+    color: #6B5847;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .mobile-logout:hover {
+    background: rgba(0,0,0,0.05);
+  }
+}

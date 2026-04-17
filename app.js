@@ -12,9 +12,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   if (error) err.textContent = 'Email o contrasena incorrectos';
 });
 
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  if (!confirm('Cerrar sesion?')) return;
-  await sb.auth.signOut();
+['btn-logout', 'btn-logout-mobile'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', async () => {
+    if (!confirm('Cerrar sesion?')) return;
+    await sb.auth.signOut();
+  });
 });
 
 // ===== NAVEGACIÓN ENTRE VISTAS =====
