@@ -1,0 +1,19 @@
+{
+    "name": "De LanuK · Novias",
+    "short_name": "De LanuK",
+    "description": "Panel de gestión de novias a medida",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#FDFBF7",
+    "theme_color": "#6B5847",
+    "icons": [
+          {
+                  "src": "logo.png",
+                  "sizes": "any",
+                  "type": "image/png",
+                  "purpose": "any"
+          }
+    ]
+}
