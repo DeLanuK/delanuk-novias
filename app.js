@@ -31,7 +31,7 @@ const BADGE_CLASS = {
 
 // STATE
 let novias = [];
-let editId = null;
+let editId = null; let noviaSort = { col: 'fecha', dir: 1 }; let dashSearch = '';
 let fichaId = null;
 let realtimeChannel = null;
 
@@ -107,6 +107,23 @@ function igLink(handle) {
   if (!handle) return null;
   const clean = handle.replace(/^@/, '').trim();
   return clean ? 'https://instagram.com/' + clean : null;
+}
+
+function nextAction(n) {
+  if (!n.checklist) return null;
+  const item = n.checklist.find(c => !c.done);
+  return item ? item.label : null;
+}
+
+async function deleteNovia(id) {
+  const n = novias.find(x => x.id === id);
+  if (!n) return;
+  if (!confirm(`¿Eliminar a ${n.nombre}? Esta acción no se puede deshacer.`)) return;
+  const { error } = await sb.from('novias').delete().eq('id', id);
+  if (error) { showToast('Error al eliminar'); return; }
+  closeModal('ficha');
+  showToast(`${n.nombre} eliminada`);
+  await loadNovias();
 }
 
 // AUTH
@@ -211,25 +228,34 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 
 // DASHBOARD
 function renderDash() {
-  const pend  = novias.filter(n => n.estado === 'Pendiente').length;
-  const conf  = novias.filter(n => n.estado === 'Confirmado').length;
+  const q = dashSearch.toLowerCase();
+  const pend = novias.filter(n => n.estado === 'Pendiente').length;
+  const conf = novias.filter(n => n.estado === 'Confirmado').length;
   const saldoTotal = novias.reduce((a, n) => a + ((n.total || 0) - (n.sena || 0)), 0);
-
   document.getElementById('dash-subtitle').textContent = `${novias.length} novias activas`;
-
   document.getElementById('kpi-row').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Novias activas</div><div class="kpi-val rose">${novias.length}</div></div>
     <div class="kpi-card"><div class="kpi-label">Pendientes accion</div><div class="kpi-val red">${pend}</div></div>
     <div class="kpi-card"><div class="kpi-label">Confirmadas</div><div class="kpi-val blue">${conf}</div></div>
     <div class="kpi-card"><div class="kpi-label">Saldo a cobrar</div><div class="kpi-val green">$${fmt(saldoTotal)}</div></div>
   `;
+  // Sync search input if exists
+  const si = document.getElementById('dash-search');
+  if (si && si.value !== dashSearch) si.value = dashSearch;
 
-  const sorted = [...novias].sort((a, b) => parseDate(a.fecha) - parseDate(b.fecha));
+  let filtered = [...novias].sort((a, b) => parseDate(a.fecha) - parseDate(b.fecha));
+  if (q) {
+    filtered = filtered.filter(n =>
+      (n.nombre || '').toLowerCase().includes(q) ||
+      (n.ciudad || '').toLowerCase().includes(q) ||
+      (n.piezas || '').toLowerCase().includes(q) ||
+      (n.resp || '').toLowerCase().includes(q)
+    );
+  }
   const tbody = document.getElementById('dash-tbody');
   tbody.innerHTML = '';
   let prevMonth = '';
-
-  sorted.forEach(n => {
+  filtered.forEach(n => {
     const d = parseDate(n.fecha);
     const monthLabel = fmtDate(d) || 'Sin fecha';
     if (monthLabel !== prevMonth) {
@@ -237,11 +263,12 @@ function renderDash() {
       tbody.insertAdjacentHTML('beforeend', `<tr class="month-divider"><td colspan="7">${monthLabel.toUpperCase()}</td></tr>`);
     }
     const saldo = n.total > 0 ? n.total - n.sena : null;
+    const next = nextAction(n);
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
         <td><span class="td-name">${escapeHtml(n.nombre)}</span>${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}</td>
         <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
-        <td>${badge(n.estado)}</td>
+        <td>${badge(n.estado)}${next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : ''}</td>
         <td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>
         <td><span class="td-muted">${escapeHtml(n.resp) || '-'}</span></td>
         <td class="amount ${saldo > 0 ? 'due' : ''}">${saldo !== null ? '$' + fmt(saldo) : '-'}</td>
@@ -250,18 +277,34 @@ function renderDash() {
     `);
   });
 }
-
 // NOVIAS LIST
 function renderNovias() {
   const q = (document.getElementById('search').value || '').toLowerCase();
   const est = document.getElementById('filter-estado').value;
+  const { col, dir } = noviaSort;
+
   const filtered = [...novias]
-    .sort((a, b) => parseDate(a.fecha) - parseDate(b.fecha))
     .filter(n => {
       const mq = !q || (n.nombre || '').toLowerCase().includes(q) || (n.ciudad || '').toLowerCase().includes(q) || (n.piezas || '').toLowerCase().includes(q);
       const me = !est || n.estado === est;
       return mq && me;
+    })
+    .sort((a, b) => {
+      let va, vb;
+      if (col === 'fecha') { va = parseDate(a.fecha); vb = parseDate(b.fecha); return dir * (va - vb); }
+      if (col === 'estado') { va = a.estado || ''; vb = b.estado || ''; return dir * va.localeCompare(vb); }
+      if (col === 'saldo') { va = (a.total||0)-(a.sena||0); vb = (b.total||0)-(b.sena||0); return dir * (va - vb); }
+      return 0;
     });
+
+  // Update sort arrows in headers
+  ['fecha','estado','saldo'].forEach(c => {
+    const th = document.getElementById('th-' + c);
+    if (!th) return;
+    th.dataset.sort = c;
+    const arrow = col === c ? (dir === 1 ? ' ↑' : ' ↓') : ' ↕';
+    th.querySelector('.sort-arrow').textContent = arrow;
+  });
 
   const tbody = document.getElementById('novias-tbody');
   if (!filtered.length) {
@@ -272,8 +315,11 @@ function renderNovias() {
   filtered.forEach(n => {
     const saldo = n.total > 0 ? n.total - n.sena : null;
     const pagoBadge = n.total > 0
-      ? (saldo === 0 ? `<span class="badge b-paid">Pagado</span>` : n.sena > 0 ? `<span class="badge b-partial">Sena</span>` : `<span class="badge b-nopago">Sin sena</span>`)
+      ? (saldo === 0 ? `<span class="badge b-paid">Pagado</span>`
+        : n.sena > 0 ? `<span class="badge b-partial">Sena</span>`
+        : `<span class="badge b-nopago">Sin sena</span>`)
       : `<span class="td-muted">-</span>`;
+    const next = nextAction(n);
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
         <td>
@@ -283,7 +329,7 @@ function renderNovias() {
         <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
         <td class="td-muted">${escapeHtml(n.ciudad) || '-'}</td>
         <td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>
-        <td>${badge(n.estado)}</td>
+        <td>${badge(n.estado)}${next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : ''}</td>
         <td>${pagoBadge}</td>
         <td><div class="row-actions">
           <button class="row-btn" onclick="openFicha(${n.id})">Ficha</button>
@@ -293,7 +339,6 @@ function renderNovias() {
     `);
   });
 }
-
 // PAGOS
 function renderPagos() {
   const withPago = novias.filter(n => (n.total || 0) > 0 || (n.sena || 0) > 0);
