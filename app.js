@@ -193,6 +193,7 @@ async function loadNovias() {
   novias = data.map(n => ({
     ...n,
     checklist: Array.isArray(n.checklist) && n.checklist.length ? n.checklist : mkCheck(0),
+    pagos: Array.isArray(n.pagos) ? n.pagos : [],
   }));
   renderDash();
   if (document.getElementById('view-novias').classList.contains('active')) renderNovias();
@@ -460,13 +461,18 @@ function openFicha(id) {
       </div>` : ''}
     ${n.piezas ? `<div class="ficha-sec">Piezas encargadas</div><div class="ficha-piezas">${escapeHtml(n.piezas)}</div>` : ''}
     ${n.notas ? `<div class="ficha-sec">Notas internas</div><div class="ficha-notas">${escapeHtml(n.notas)}</div>` : ''}
-    <div class="ficha-sec">Pago</div>
+    <div class="ficha-sec">Pagos</div>
     <div class="pago-cards">
-      <div class="pago-card"><div class="pc-label">Total</div><div class="pc-val rose">${n.total > 0 ? '$' + fmt(n.total) : '-'}</div></div>
-      <div class="pago-card"><div class="pc-label">Sena cobrada</div><div class="pc-val green">${n.sena > 0 ? '$' + fmt(n.sena) : '-'}</div></div>
+      <div class="pago-card"><div class="pc-label">Presupuesto</div><div class="pc-val rose">${n.total > 0 ? '$' + fmt(n.total) : '-'}</div></div>
+      <div class="pago-card"><div class="pc-label">Cobrado</div><div class="pc-val green">${n.sena > 0 ? '$' + fmt(n.sena) : '-'}</div></div>
       <div class="pago-card"><div class="pc-label">Saldo</div><div class="pc-val ${saldo > 0 ? 'red' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</div></div>
     </div>
-    <div class="ficha-sec">Proceso - ${done}/${n.checklist.length} etapas completadas</div>
+    ${(n.pagos && n.pagos.length > 0) ? '<div class="pagos-lista">' + n.pagos.map((p, i) => '<div class="pago-item"><span class="pago-fecha">' + p.fecha + '</span><span class="pago-concepto">' + escapeHtml(p.concepto) + '</span><span class="pago-monto">' + '$' + fmt(p.monto) + '</span><button class="pago-del" onclick="deletePago(' + n.id + ',' + i + ')">×</button></div>').join('') + '</div>' : '<p class="ck-date" style="margin:4px 0 8px">Sin pagos registrados</p>'}
+    <div class="pago-add-row">
+      <input class="pago-input" id="pago-monto-${n.id}" type="number" placeholder="Monto $" min="1">
+      <input class="pago-input" id="pago-concepto-${n.id}" type="text" placeholder="Concepto">
+      <button class="btn-ghost" style="padding:6px 12px;font-size:12px" onclick="addPago(${n.id})">+ Agregar</button>
+    </div>    <div class="ficha-sec">Proceso - ${done}/${n.checklist.length} etapas completadas</div>
     <div class="checklist" id="checklist-${id}"></div>
   `;
   renderChecklist(n);
@@ -481,21 +487,54 @@ function renderChecklist(n) {
     const div = document.createElement('div');
     div.className = 'check-item' + (c.done ? ' done' : '');
     div.onclick = () => toggleCheck(n.id, i);
-    div.innerHTML = `<div class="ck-box">${c.done ? 'X' : ''}</div><span class="ck-label">${escapeHtml(c.label)}</span>`;
+    const dateStr = c.done && c.fechaDone
+      ? '<span class="ck-date">' + new Date(c.fechaDone).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'}) + '</span>'
+      : '';
+    div.innerHTML = '<div class="ck-box">' + (c.done ? '✓' : '') + '</div><span class="ck-label">' + escapeHtml(c.label) + '</span>' + dateStr;
     el.appendChild(div);
   });
 }
-
 async function toggleCheck(nid, idx) {
   const n = novias.find(x => x.id === nid);
-  n.checklist[idx].done = !n.checklist[idx].done;
+  const wasDone = n.checklist[idx].done;
+  n.checklist[idx].done = !wasDone;
+  n.checklist[idx].fechaDone = !wasDone ? new Date().toISOString() : null;
   renderChecklist(n);
   const { error } = await sb.from('novias').update({ checklist: n.checklist }).eq('id', nid);
   if (error) {
-    n.checklist[idx].done = !n.checklist[idx].done;
+    n.checklist[idx].done = wasDone;
+    n.checklist[idx].fechaDone = wasDone ? n.checklist[idx].fechaDone : null;
     renderChecklist(n);
     showToast('Error guardando cambio');
   }
+}
+async function addPago(nid) {
+  const montoEl = document.getElementById('pago-monto-' + nid);
+  const concEl = document.getElementById('pago-concepto-' + nid);
+  const monto = parseInt(montoEl ? montoEl.value : 0) || 0;
+  const concepto = concEl ? (concEl.value.trim() || 'Pago') : 'Pago';
+  if (!monto) { showToast('Ingresa un monto'); return; }
+  const n = novias.find(x => x.id === nid);
+  const nuevoPago = { fecha: new Date().toISOString().slice(0,10), monto, concepto };
+  const pagosActualizados = [...(n.pagos || []), nuevoPago];
+  const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
+  const { error } = await sb.from('novias').update({ pagos: pagosActualizados, sena: totalCobrado }).eq('id', nid);
+  if (error) { showToast('Error guardando pago'); return; }
+  showToast('Pago registrado');
+  await loadNovias();
+  openFicha(nid);
+}
+
+async function deletePago(nid, idx) {
+  if (!confirm('Eliminar este pago?')) return;
+  const n = novias.find(x => x.id === nid);
+  const pagosActualizados = (n.pagos || []).filter((_, i) => i !== idx);
+  const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
+  const { error } = await sb.from('novias').update({ pagos: pagosActualizados, sena: totalCobrado }).eq('id', nid);
+  if (error) { showToast('Error eliminando pago'); return; }
+  showToast('Pago eliminado');
+  await loadNovias();
+  openFicha(nid);
 }
 
 function editFromFicha() {
