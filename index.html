@@ -28,6 +28,51 @@
         <div class="fg"><label>Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required></div>
         <div id="login-error" class="login-error"></div>
         <button type="submit" class="btn-primary login-btn" id="login-submit">Ingresar</button>
+        <p style="margin-top:12px; text-align:center;">
+          <a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a>
+        </p>
+      </form>
+    </div>
+  </div>
+  <!-- Pantalla: pedir email para recuperar contraseña -->
+  <div id="forgot-screen" class="login-screen hidden">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="logo.png" alt="DELANUK Novias a Medida" class="login-logo">
+      </div>
+      <p class="login-title">Recuperar contraseña</p>
+      <form id="forgot-form" class="login-form">
+        <div class="fg">
+          <label>Email</label>
+          <input id="forgot-email" type="email" autocomplete="username" required>
+        </div>
+        <div id="forgot-msg" class="login-error"></div>
+        <button type="submit" class="btn-primary login-btn">Enviar mail de recuperación</button>
+        <p style="margin-top:12px; text-align:center;">
+          <a href="#" id="forgot-back">Volver al login</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pantalla: elegir nueva contraseña (cuando vuelve del link del mail) -->
+  <div id="reset-screen" class="login-screen hidden">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="logo.png" alt="DELANUK Novias a Medida" class="login-logo">
+      </div>
+      <p class="login-title">Elegí tu nueva contraseña</p>
+      <form id="reset-form" class="login-form">
+        <div class="fg">
+          <label>Nueva contraseña</label>
+          <input id="reset-password" type="password" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div class="fg">
+          <label>Repetir contraseña</label>
+          <input id="reset-password2" type="password" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div id="reset-msg" class="login-error"></div>
+        <button type="submit" class="btn-primary login-btn">Guardar nueva contraseña</button>
       </form>
     </div>
   </div>
@@ -134,7 +179,7 @@
           </div>
         </div>
         <div class="kpi-row admin-only" id="kpi-pagos"></div>
-        <div class="grafico-wrap admin-only" id="grafico-ingresos" style="margin-top:20px"></div>
+        
         <div class="table-wrap" style="margin-top:20px">
           <table>
             <thead><tr>
