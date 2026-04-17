@@ -369,6 +369,31 @@ async function deleteNovia(id) {
   await loadNovias();
 }
 
+async function toggleArchivada(id) {
+  const n = window.AppState.novias.find(x => x.id === id);
+  if (!n) return;
+  const nuevoEstado = !n.archivada;
+  const accion = nuevoEstado ? 'archivar' : 'desarchivar';
+  if (!confirm(`¿Querés ${accion} a ${n.nombre}?`)) return;
+
+  const { error } = await apiSetArchivada(id, nuevoEstado);
+  if (error) { showToast('Error al ' + accion); return; }
+
+  n.archivada = nuevoEstado;
+  showToast(nuevoEstado ? 'Novia archivada' : 'Novia desarchivada');
+
+  if (nuevoEstado && !window.AppState.showArchived) {
+    window.AppState.novias = window.AppState.novias.filter(x => x.id !== id);
+    closeModal('ficha');
+  } else {
+    openFicha(id);
+  }
+  renderDash();
+  renderNovias();
+  renderPagos();
+}
+window.toggleArchivada = toggleArchivada;
+
 // ===== FICHA =====
 function openFicha(id, opts = {}) {
   window.AppState.fichaId = id;
@@ -388,15 +413,20 @@ function openFicha(id, opts = {}) {
 
   document.getElementById('ficha-name').textContent = n.nombre;
   document.getElementById('ficha-body').innerHTML = `
-    <div class="ficha-hero">
-      <div>
-        <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}</div>
-        <div class="ficha-hero-sub">
-          ${escapeHtml(n.fecha) || 'Fecha a confirmar'} - ${escapeHtml(n.ciudad) || '-'} - ${escapeHtml(n.tipo) || '-'}<br>
-          ${escapeHtml(n.rol || '')}${n.resp ? ' - Responsable: ' + escapeHtml(n.resp) : ''}
-        </div>
-      </div>
+   <div class="ficha-hero">
+  <div>
+    <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}${n.archivada ? ' <span class="badge b-archived">Archivada</span>' : ''}</div>
+    <div class="ficha-hero-sub">
+      ${escapeHtml(n.fecha) || 'Fecha a confirmar'} - ${escapeHtml(n.ciudad) || '-'} - ${escapeHtml(n.tipo) || '-'}<br>
+      ${escapeHtml(n.rol || '')}${n.resp ? ' - Responsable: ' + escapeHtml(n.resp) : ''}
     </div>
+  </div>
+</div>
+<div style="margin-top:8px">
+  <button class="btn-ghost" onclick="toggleArchivada(${n.id})" style="font-size:12px;padding:6px 12px">
+    ${n.archivada ? '↩ Desarchivar' : '🗄 Archivar'}
+  </button>
+</div>
     ${(wa || ig) ? `<div class="ficha-sec">Contacto</div>
       <div class="contact-row">
         ${wa ? `<a class="chip chip-link" href="${waMsg}" target="_blank" rel="noopener">WhatsApp · ${escapeHtml(n.tel)}</a>` : ''}
