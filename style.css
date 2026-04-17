@@ -260,6 +260,9 @@ tr:hover td { background: var(--rose-xl); transition: background .1s; }
 .b-paid    { background: var(--green-l);  color: var(--green); }
 .b-partial { background: var(--yellow-l); color: var(--yellow); }
 .b-nopago  { background: #F0EDE8;         color: var(--ink-l); }
+.b-urgent  { background: var(--red-l);    color: var(--red); }
+.chip-link { cursor: pointer; text-decoration: none; transition: background .12s; }
+.chip-link:hover { background: var(--rose-l); }
 
 /* ── ROW ACTIONS ──────────────────────────────────────────────────────── */
 .row-actions { display: flex; gap: 4px; }
