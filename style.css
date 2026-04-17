@@ -119,6 +119,19 @@ body {
     align-items: flex-start;
     margin-bottom: 24px;
 }
+.search-bar-wrap { margin-bottom: 16px; }
+.search-bar {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+}
+.search-bar:focus { border-color: var(--rose-m); }
 .page-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 30px;
@@ -155,6 +168,18 @@ body {
     cursor: pointer;
     transition: background .15s;
 }
+.btn-danger {
+    padding: 9px 18px;
+    background: none;
+    color: var(--red);
+    border: 1px solid var(--red-l);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-danger:hover { background: var(--red-l); }
 .btn-ghost:hover { background: var(--surface-2); }
 .btn-sm { padding: 5px 11px; font-size: 12px; }
 
@@ -277,6 +302,10 @@ tr:hover td { background: var(--rose-xl); transition: background .1s; }
     font-family: 'DM Sans', sans-serif;
     transition: all .12s;
 }
+.th-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.th-sort:hover { color: var(--rose); }
+.sort-arrow { font-size: 11px; color: var(--ink-l); }
+.next-action { font-size: 11px; color: var(--rose); margin-top: 2px; display: block; }
 .row-btn:hover { background: var(--rose-l); }
 
 /* ── TOOLBAR ──────────────────────────────────────────────────────────── */
