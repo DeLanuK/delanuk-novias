@@ -489,6 +489,16 @@ textarea { resize: vertical; }
     padding: 12px 14px;
     text-align: center;
 }
+.pagos-lista { margin: 6px 0 10px; display: flex; flex-direction: column; gap: 4px; }
+.pago-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface-2); border-radius: 6px; font-size: 13px; }
+.pago-fecha { color: var(--ink-l); font-size: 11px; min-width: 70px; }
+.pago-concepto { flex: 1; color: var(--ink); }
+.pago-monto { font-weight: 600; color: var(--green); }
+.pago-del { background: none; border: none; color: var(--ink-l); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+.pago-del:hover { color: var(--red); }
+.pago-add-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.pago-input { flex: 1; min-width: 100px; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); outline: none; }
+.pago-input:focus { border-color: var(--rose-m); }
 .pc-label { font-size: 10px; color: var(--ink-l); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
 .pc-val {
     font-family: 'Cormorant Garamond', serif;
@@ -529,6 +539,7 @@ textarea { resize: vertical; }
     font-size: 10px;
     color: #fff;
 }
+.ck-date { font-size: 11px; color: var(--ink-l); margin-left: auto; padding-left: 8px; }
 .check-item.done .ck-box { background: var(--green); border-color: var(--green); }
 .ck-label { font-size: 13px; flex: 1; }
 
