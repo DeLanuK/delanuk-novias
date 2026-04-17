@@ -453,27 +453,50 @@ async function addPago(nid) {
   const monto = parseInt(montoEl ? montoEl.value : 0) || 0;
   const concepto = concEl ? (concEl.value.trim() || 'Pago') : 'Pago';
   if (!monto) { showToast('Ingresa un monto'); return; }
+
   const n = window.AppState.novias.find(x => x.id === nid);
   const nuevoPago = { fecha: new Date().toISOString().slice(0,10), monto, concepto };
   const pagosActualizados = [...(n.pagos || []), nuevoPago];
   const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
-  const { error } = await apiUpdateNovia(nid, { pagos: pagosActualizados, sena: totalCobrado });
-  if (error) { showToast('Error guardando pago'); return; }
-  showToast('Pago registrado');
-  await loadNovias();
+
+  // Actualizar localmente PRIMERO (refresco visual inmediato)
+  n.pagos = pagosActualizados;
+  n.sena = totalCobrado;
   openFicha(nid);
+  showToast('Pago registrado');
+
+  // Después guardar en la base, sin bloquear la UI
+  const { error } = await apiUpdateNovia(nid, { pagos: pagosActualizados, sena: totalCobrado });
+  if (error) {
+    showToast('Error guardando pago');
+    n.pagos = (n.pagos || []).filter(p => p !== nuevoPago);
+    n.sena = (n.pagos || []).reduce((a, p) => a + p.monto, 0);
+    openFicha(nid);
+  }
 }
 
 async function deletePago(nid, idx) {
   if (!confirm('Eliminar este pago?')) return;
+
   const n = window.AppState.novias.find(x => x.id === nid);
+  const pagoEliminado = n.pagos[idx];
   const pagosActualizados = (n.pagos || []).filter((_, i) => i !== idx);
   const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
-  const { error } = await apiUpdateNovia(nid, { pagos: pagosActualizados, sena: totalCobrado });
-  if (error) { showToast('Error eliminando pago'); return; }
-  showToast('Pago eliminado');
-  await loadNovias();
+
+  // Actualizar localmente PRIMERO
+  n.pagos = pagosActualizados;
+  n.sena = totalCobrado;
   openFicha(nid);
+  showToast('Pago eliminado');
+
+  // Después guardar en la base
+  const { error } = await apiUpdateNovia(nid, { pagos: pagosActualizados, sena: totalCobrado });
+  if (error) {
+    showToast('Error eliminando pago');
+    n.pagos.splice(idx, 0, pagoEliminado);
+    n.sena = n.pagos.reduce((a, p) => a + p.monto, 0);
+    openFicha(nid);
+  }
 }
 
 function editFromFicha() {
