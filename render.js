@@ -622,3 +622,307 @@ function exportCSV() {
   setTimeout(() => dl(pagosCsv, 'delanuk-pagos.csv'), 400);
   showToast('CSVs generados ✓');
 }
+// ===== ENVÍO =====
+// Sección de despacho/logística. Todos los campos son opcionales.
+
+// Helper local: devuelve true si un valor está "cargado" (no null, no undefined, no string vacío).
+function envioHasValue(v) {
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'string' && v.trim() === '') return false;
+  return true;
+}
+
+// Helper local: dado un objeto (ej. destinatario) devuelve true si al menos un campo tiene valor.
+function envioSectionHasData(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  return Object.values(obj).some(envioHasValue);
+}
+
+// Helper local: etiqueta legible del estado.
+function envioEstadoLabel(estado) {
+  const map = {
+    pendiente: 'Pendiente',
+    despachado: 'Despachado',
+    en_transito: 'En tránsito',
+    entregado: 'Entregado'
+  };
+  return map[estado] || 'Pendiente';
+}
+
+// Helper local: badge con clase de color para el estado.
+function envioEstadoBadge(estado) {
+  const clase = estado && ['pendiente','despachado','en_transito','entregado'].includes(estado)
+    ? estado : 'pendiente';
+  return `<span class="badge-envio ${clase}">${envioEstadoLabel(clase)}</span>`;
+}
+
+// ===== KPIs de Envío =====
+function renderKpiEnvio() {
+  const cont = document.getElementById('kpi-envio');
+  if (!cont) return;
+  const novias = (window.AppState && AppState.novias) || [];
+  const hoy = new Date();
+  const mesActual = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+
+  let pendientes = 0, despMes = 0, entrMes = 0, totalConEnvio = 0;
+
+  novias.forEach(n => {
+    if (!n.envio) return;
+    totalConEnvio++;
+    const estado = n.envio?.estado || 'pendiente';
+    if (estado === 'pendiente') pendientes++;
+
+    const fd = n.envio?.fecha_despacho;
+    if (fd) {
+      const d = new Date(fd);
+      if (!isNaN(d) && d.getMonth() === mesActual && d.getFullYear() === anioActual && estado !== 'pendiente') {
+        despMes++;
+      }
+    }
+    if (estado === 'entregado' && fd) {
+      const d = new Date(fd);
+      if (!isNaN(d) && d.getMonth() === mesActual && d.getFullYear() === anioActual) {
+        entrMes++;
+      }
+    }
+  });
+
+  cont.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Pendientes de despacho</div><div class="kpi-val">${pendientes}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Despachados este mes</div><div class="kpi-val">${despMes}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Entregados este mes</div><div class="kpi-val green">${entrMes}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total con envío</div><div class="kpi-val">${totalConEnvio}</div></div>
+  `;
+}
+
+// ===== Vista Envío (tabla + KPIs) =====
+function renderEnvio() {
+  renderKpiEnvio();
+  const tb = document.getElementById('envio-tbody');
+  if (!tb) return;
+
+  const novias = (window.AppState && AppState.novias) || [];
+  const q = (document.getElementById('envio-search')?.value || '').toLowerCase().trim();
+  const filtroEstado = document.getElementById('envio-filter-estado')?.value || '';
+
+  const filtradas = novias.filter(n => {
+    if (!n.envio) return false;
+    const estado = n.envio?.estado || 'pendiente';
+    if (filtroEstado && estado !== filtroEstado) return false;
+    if (q) {
+      const hayNombre = (n.nombre || '').toLowerCase().includes(q);
+      const hayTracking = (n.envio?.tracking || '').toLowerCase().includes(q);
+      if (!hayNombre && !hayTracking) return false;
+    }
+    return true;
+  });
+
+  if (!filtradas.length) {
+    tb.innerHTML = `<tr><td colspan="7" style="text-align:center;opacity:.6;padding:24px">Sin envíos cargados todavía. Cargá datos desde la ficha de una novia.</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = filtradas.map(n => {
+    const estado = n.envio?.estado || 'pendiente';
+    const correo = n.envio?.correo?.empresa || '—';
+    const desp = n.envio?.fecha_despacho || '—';
+    const trk = n.envio?.tracking || '—';
+    return `
+      <tr>
+        <td>${escapeHtml(n.nombre || '')}</td>
+        <td>${escapeHtml(n.fecha || '—')}</td>
+        <td>${envioEstadoBadge(estado)}</td>
+        <td>${escapeHtml(correo)}</td>
+        <td>${escapeHtml(desp)}</td>
+        <td>${escapeHtml(trk)}</td>
+        <td>
+          <div class="envio-row-actions">
+            <button class="btn-ghost" onclick="openEnvio(${n.id})" aria-label="Editar envío de ${escapeHtml(n.nombre || '')}">Editar</button>
+            <button class="btn-ghost" onclick="copiarMensajeEnvio(${n.id})" aria-label="Copiar mensaje de envío">Copiar</button>
+            <button class="btn-primary" onclick="abrirWhatsAppLogistica(${n.id})" aria-label="Abrir WhatsApp logística">WhatsApp</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ===== Mensaje de WhatsApp para logística (omite líneas vacías) =====
+function envioMessage(n) {
+  if (!n) return '';
+  const e = n.envio || {};
+  const bullets = [];
+
+  // Título
+  const out = [];
+  out.push(`📦 ENVÍO DELANUK · ${n.nombre || ''}`.trim());
+
+  // Destinataria
+  const dest = e.destinatario || {};
+  if (envioSectionHasData(dest)) {
+    out.push('');
+    out.push('DESTINATARIA');
+    if (envioHasValue(dest.nombre)) out.push(`• Nombre: ${dest.nombre}`);
+    if (envioHasValue(dest.tel))    out.push(`• Tel: ${dest.tel}`);
+    if (envioHasValue(dest.email))  out.push(`• Email: ${dest.email}`);
+    if (envioHasValue(dest.dni))    out.push(`• DNI: ${dest.dni}`);
+  }
+
+  // Dirección
+  const dir = e.direccion || {};
+  if (envioSectionHasData(dir)) {
+    out.push('');
+    out.push('DIRECCIÓN');
+    // Línea 1: calle + número + piso + depto (solo partes con valor)
+    const l1parts = [];
+    if (envioHasValue(dir.calle))  l1parts.push(dir.calle);
+    if (envioHasValue(dir.numero)) l1parts.push(dir.numero);
+    let l1 = l1parts.join(' ').trim();
+    const pisoDepto = [];
+    if (envioHasValue(dir.piso))  pisoDepto.push(`piso ${dir.piso}`);
+    if (envioHasValue(dir.depto)) pisoDepto.push(`depto ${dir.depto}`);
+    if (pisoDepto.length) l1 = l1 ? `${l1}, ${pisoDepto.join(' ')}` : pisoDepto.join(' ');
+    if (l1) out.push(`• ${l1}`);
+
+    // Línea 2: ciudad + provincia + cp
+    const l2parts = [];
+    if (envioHasValue(dir.ciudad))    l2parts.push(dir.ciudad);
+    if (envioHasValue(dir.provincia)) l2parts.push(dir.provincia);
+    let l2 = l2parts.join(', ');
+    if (envioHasValue(dir.cp)) l2 = l2 ? `${l2} (CP ${dir.cp})` : `CP ${dir.cp}`;
+    if (l2) out.push(`• ${l2}`);
+
+    if (envioHasValue(dir.referencia)) out.push(`• Referencia: ${dir.referencia}`);
+  }
+
+  // Paquete
+  const pq = e.paquete || {};
+  const pqHasValue = envioHasValue(pq.descripcion) || envioHasValue(pq.peso_kg) ||
+                     envioHasValue(pq.dimensiones) || envioHasValue(pq.valor_declarado) ||
+                     pq.contenido_fragil === true;
+  if (pqHasValue) {
+    out.push('');
+    out.push('PAQUETE');
+    if (envioHasValue(pq.descripcion))     out.push(`• Contenido: ${pq.descripcion}`);
+    const pesoDim = [];
+    if (envioHasValue(pq.peso_kg))     pesoDim.push(`${pq.peso_kg} kg`);
+    if (envioHasValue(pq.dimensiones)) pesoDim.push(pq.dimensiones);
+    if (pesoDim.length) out.push(`• Peso: ${pesoDim.join(' · ')}`);
+    if (envioHasValue(pq.valor_declarado)) out.push(`• Valor declarado: $${pq.valor_declarado}`);
+    if (pq.contenido_fragil === true)      out.push(`• Frágil: sí`);
+  }
+
+  // Correo / Logística
+  const co = e.correo || {};
+  if (envioSectionHasData(co)) {
+    out.push('');
+    out.push('LOGÍSTICA');
+    const correo = [];
+    if (envioHasValue(co.empresa))  correo.push(co.empresa);
+    if (envioHasValue(co.servicio)) correo.push(co.servicio);
+    if (correo.length) out.push(`• Correo: ${correo.join(' · ')}`);
+    if (envioHasValue(co.horario_entrega))         out.push(`• Horario preferido: ${co.horario_entrega}`);
+    if (envioHasValue(co.instrucciones_especiales)) out.push(`• Instrucciones: ${co.instrucciones_especiales}`);
+  }
+
+  // Fecha entrega estimada
+  if (envioHasValue(e.fecha_entrega_estimada)) {
+    out.push('');
+    out.push(`Entrega deseada antes del ${e.fecha_entrega_estimada}`);
+  }
+
+  // Notas
+  if (envioHasValue(e.notas)) {
+    out.push('');
+    out.push(`Notas: ${e.notas}`);
+  }
+
+  // Limpieza: evitar dobles saltos de línea extra al inicio/final
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// ===== URL de WhatsApp para logística =====
+function envioWhatsAppUrl(n) {
+  const numero = (window.DELANUK_CONFIG && window.DELANUK_CONFIG.LOGISTICA_WHATSAPP) || '';
+  const limpio = String(numero).replace(/[^0-9]/g, '');
+  if (!limpio) return null;
+  const text = encodeURIComponent(envioMessage(n));
+  return `https://wa.me/${limpio}?text=${text}`;
+}
+
+// ===== Copiar mensaje (con fallback) =====
+async function copiarMensajeEnvio(id) {
+  const n = (window.AppState?.novias || []).find(x => x.id === id);
+  if (!n) return;
+  const msg = envioMessage(n);
+  try {
+    await navigator.clipboard.writeText(msg);
+    showToast('Mensaje de envío copiado ✓');
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = msg;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Mensaje de envío copiado ✓');
+  }
+}
+
+// ===== Abrir WhatsApp de logística =====
+function abrirWhatsAppLogistica(id) {
+  const n = (window.AppState?.novias || []).find(x => x.id === id);
+  if (!n) { showToast('Novia no encontrada'); return; }
+  const url = envioWhatsAppUrl(n);
+  if (!url) { showToast('Falta configurar el número de logística'); return; }
+  window.open(url, '_blank');
+}
+
+// ===== Sección Envío dentro de la ficha =====
+// Inyecta el bloque "ENVÍO" al final de #ficha-body, sin tocar el resto.
+function renderEnvioFicha(n) {
+  const body = document.getElementById('ficha-body');
+  if (!body || !n) return;
+
+  // Quitar versión anterior (si openFicha se re-renderiza)
+  const prev = body.querySelector('.ficha-envio');
+  if (prev) prev.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'ficha-envio';
+
+  if (!n.envio) {
+    wrap.innerHTML = `
+      <h4>Envío</h4>
+      <button type="button" class="btn-empty" onclick="openEnvio(${n.id})" aria-label="Cargar datos de envío">
+        + Cargar datos de envío
+      </button>
+    `;
+    body.appendChild(wrap);
+    return;
+  }
+
+  const estado = n.envio?.estado || 'pendiente';
+  const correo = n.envio?.correo?.empresa || '—';
+  const trk    = n.envio?.tracking || '—';
+  const desp   = n.envio?.fecha_despacho || '—';
+
+  wrap.innerHTML = `
+    <h4>Envío</h4>
+    <div class="envio-resumen">
+      <div><span>Estado</span>${envioEstadoBadge(estado)}</div>
+      <div><span>Correo</span>${escapeHtml(correo)}</div>
+      <div><span>Tracking</span>${escapeHtml(trk)}</div>
+      <div><span>Despacho</span>${escapeHtml(desp)}</div>
+    </div>
+    <div class="envio-acciones">
+      <button class="btn-ghost" onclick="openEnvio(${n.id})">Editar</button>
+      <button class="btn-ghost" onclick="copiarMensajeEnvio(${n.id})">Copiar mensaje</button>
+      <button class="btn-primary" onclick="abrirWhatsAppLogistica(${n.id})">Abrir WhatsApp logística</button>
+    </div>
+  `;
+  body.appendChild(wrap);
+}
