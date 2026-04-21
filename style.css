@@ -778,3 +778,94 @@ body.is-staff .admin-only {
   display: block;
 }
 .hidden { display: none !important; }
+
+/* ===== ENVÍO ===== */
+
+/* Badges de estado de envío */
+.badge-envio{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:600;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.badge-envio.pendiente   { background:#FFF4D6; color:#8A6A00; border-color:#F2DDA0; }
+.badge-envio.despachado  { background:#E3F0FF; color:#1E4E8C; border-color:#BFD6F2; }
+.badge-envio.en_transito { background:#EFE3FF; color:#5A2EA6; border-color:#D6C4F2; }
+.badge-envio.entregado   { background:#E1F5E4; color:#1E6B3A; border-color:#BFE3C7; }
+
+/* Sección de envío dentro de la ficha de novia */
+.ficha-envio{
+  margin-top:20px;
+  padding:14px 16px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:10px;
+  background:#FAF7F3;
+}
+.ficha-envio h4{
+  margin:0 0 10px 0;
+  font-size:.78rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  opacity:.7;
+}
+.ficha-envio .envio-resumen{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+  gap:8px 18px;
+  font-size:.9rem;
+  margin-bottom:12px;
+}
+.ficha-envio .envio-resumen div span{
+  display:block;
+  font-size:.7rem;
+  opacity:.6;
+  margin-bottom:2px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.ficha-envio .envio-acciones{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.ficha-envio .envio-acciones button,
+.ficha-envio .envio-acciones a{
+  font-size:.82rem;
+  padding:6px 12px;
+}
+.ficha-envio .btn-empty{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 14px;
+  border:1px dashed rgba(0,0,0,.2);
+  border-radius:8px;
+  background:transparent;
+  cursor:pointer;
+  font-size:.9rem;
+}
+.ficha-envio .btn-empty:hover{
+  background:rgba(0,0,0,.03);
+}
+
+/* Formulario envío: celda que ocupa 2 columnas */
+#overlay-envio .fg.full{ grid-column: 1 / -1; }
+
+/* Tabla envío: columna de acciones alineada a la derecha */
+#envio-tbody .envio-row-actions{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+#envio-tbody .envio-row-actions button,
+#envio-tbody .envio-row-actions a{
+  font-size:.78rem;
+  padding:5px 10px;
+}
+
+/* KPI row envío: reutiliza .kpi-row, sin estilos extra */
