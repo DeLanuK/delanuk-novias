@@ -95,6 +95,10 @@
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
           Pagos
         </button>
+        <button class="nav-item" data-view="envio">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Envío
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button class="btn-add-side" id="btn-add-side">
@@ -193,6 +197,40 @@
           </table>
         </div>
       </section>
+
+      <section class="view" id="view-envio">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Envío</h1>
+            <p class="page-sub">Datos para despacho por correo · todos los campos son opcionales</p>
+          </div>
+        </div>
+
+        <div class="kpi-row" id="kpi-envio"></div>
+
+        <div class="toolbar" style="margin-top:16px">
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="envio-search" placeholder="Buscar por nombre o tracking..." oninput="renderEnvio()">
+          </div>
+          <select id="envio-filter-estado" onchange="renderEnvio()">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="despachado">Despachado</option>
+            <option value="en_transito">En tránsito</option>
+            <option value="entregado">Entregado</option>
+          </select>
+        </div>
+
+        <div class="table-wrap" style="margin-top:20px">
+          <table>
+            <thead><tr>
+              <th>Novia</th><th>Boda</th><th>Estado</th><th>Correo</th><th>Despacho</th><th>Tracking</th><th></th>
+            </tr></thead>
+            <tbody id="envio-tbody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <nav class="mobile-nav">
@@ -207,6 +245,10 @@
       <button class="nav-item" data-view="pagos">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         <span>Pagos</span>
+      </button>
+      <button class="nav-item" data-view="envio">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Envío</span>
       </button>
     </nav>
   </div>
@@ -265,6 +307,75 @@
         <button class="btn-danger" onclick="deleteNovia(fichaId)">Eliminar</button>
         <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
         <button class="btn-primary" onclick="editFromFicha()">Editar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-envio">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Datos de envío <small style="font-weight:400;opacity:.7;font-size:.75em">(todos los campos son opcionales)</small></h2>
+        <button class="close-btn" onclick="closeModal('envio')" aria-label="Cerrar">×</button>
+      </div>
+      <div class="form-scroll">
+        <input type="hidden" id="env-novia-id">
+
+        <div class="form-section-label">Destinataria</div>
+        <div class="form-grid">
+          <div class="fg"><label>Nombre</label><input id="env-dest-nombre" type="text" autocomplete="name"></div>
+          <div class="fg"><label>Teléfono</label><input id="env-dest-tel" type="tel" autocomplete="tel"></div>
+          <div class="fg"><label>Email</label><input id="env-dest-email" type="email" autocomplete="email"></div>
+          <div class="fg"><label>DNI</label><input id="env-dest-dni" type="text" inputmode="numeric"></div>
+        </div>
+
+        <div class="form-section-label" style="margin-top:18px">Dirección</div>
+        <div class="form-grid">
+          <div class="fg"><label>Calle</label><input id="env-dir-calle" type="text" autocomplete="address-line1"></div>
+          <div class="fg"><label>Número</label><input id="env-dir-numero" type="text"></div>
+          <div class="fg"><label>Piso</label><input id="env-dir-piso" type="text"></div>
+          <div class="fg"><label>Depto</label><input id="env-dir-depto" type="text"></div>
+          <div class="fg"><label>Ciudad</label><input id="env-dir-ciudad" type="text" autocomplete="address-level2"></div>
+          <div class="fg"><label>Provincia</label><input id="env-dir-provincia" type="text" autocomplete="address-level1"></div>
+          <div class="fg"><label>Código postal</label><input id="env-dir-cp" type="text" autocomplete="postal-code"></div>
+          <div class="fg full"><label>Referencia</label><input id="env-dir-referencia" type="text" placeholder="Entre calles, color de casa, etc."></div>
+        </div>
+
+        <div class="form-section-label" style="margin-top:18px">Paquete</div>
+        <div class="form-grid">
+          <div class="fg full"><label>Descripción del contenido</label><input id="env-pq-desc" type="text" placeholder="Ej: vestido de novia + accesorios"></div>
+          <div class="fg"><label>Peso (kg)</label><input id="env-pq-peso" type="number" step="0.01" min="0"></div>
+          <div class="fg"><label>Dimensiones</label><input id="env-pq-dim" type="text" placeholder="Ej: 60x40x30 cm"></div>
+          <div class="fg"><label>Valor declarado ($)</label><input id="env-pq-valor" type="number" step="1" min="0"></div>
+          <div class="fg"><label><input type="checkbox" id="env-pq-fragil" style="margin-right:6px"> Contenido frágil</label></div>
+        </div>
+
+        <div class="form-section-label" style="margin-top:18px">Correo / Logística</div>
+        <div class="form-grid">
+          <div class="fg"><label>Empresa</label><input id="env-co-empresa" type="text" placeholder="Andreani, OCA, Correo Argentino..."></div>
+          <div class="fg"><label>Servicio</label><input id="env-co-servicio" type="text" placeholder="Estándar, urgente..."></div>
+          <div class="fg"><label>Horario preferido</label><input id="env-co-horario" type="text"></div>
+          <div class="fg full"><label>Instrucciones especiales</label><input id="env-co-instrucciones" type="text"></div>
+        </div>
+
+        <div class="form-section-label" style="margin-top:18px">Estado y seguimiento</div>
+        <div class="form-grid">
+          <div class="fg"><label>Estado</label>
+            <select id="env-estado">
+              <option value="pendiente">Pendiente</option>
+              <option value="despachado">Despachado</option>
+              <option value="en_transito">En tránsito</option>
+              <option value="entregado">Entregado</option>
+            </select>
+          </div>
+          <div class="fg"><label>Tracking</label><input id="env-tracking" type="text"></div>
+          <div class="fg"><label>Fecha de despacho</label><input id="env-fecha-despacho" type="date"></div>
+          <div class="fg"><label>Entrega estimada</label><input id="env-fecha-entrega" type="date"></div>
+          <div class="fg full"><label>Notas</label><textarea id="env-notas" rows="2"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeModal('envio')">Cancelar</button>
+        <button class="btn-primary" id="btn-save-envio" onclick="saveEnvio()">Guardar</button>
       </div>
     </div>
   </div>
