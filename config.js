@@ -5,4 +5,5 @@ window.DELANUK_CONFIG = {
     'de.lanukcba@gmail.com',
     'administracion@delanuk.com',
   ],
+  LOGISTICA_WHATSAPP: '+5493518042538',
 };
