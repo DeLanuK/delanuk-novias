@@ -693,6 +693,46 @@ textarea { resize: vertical; }
     .form-grid { grid-template-columns: 1fr; }
     .pago-cards { grid-template-columns: 1fr; }
     .login-card { padding: 28px 22px; }
+    /* Header de cada vista (titulo + boton de accion) */
+    .page-header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .page-header h1 {
+        flex: 1 1 100%;
+    }
+    .page-header .btn-primary,
+    .page-header > button {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    /* KPIs en una sola columna en pantallas chicas */
+    .kpi-row {
+        grid-template-columns: 1fr;
+    }
+    .kpi-card {
+        padding: 14px 16px;
+    }
+
+    /* Toolbar de busqueda/filtros tambien apilada */
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .toolbar > * {
+        width: 100%;
+    }
+
+    /* Asegurar scroll horizontal suave en las tablas */
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 12px;
+    }
+    .table-wrap table {
+        min-width: 600px;
+    }
     .modal {
         width: 100%;
         max-height: 92vh;
