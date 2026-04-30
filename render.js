@@ -586,8 +586,9 @@ async function deletePago(nid, idx) {
 }
 
 function editFromFicha() {
+  const id = window.AppState.fichaId;
   closeModal('ficha');
-  openModal('edit', window.AppState.fichaId);
+  openModal('edit', id);
 }
 
 // ===== EXPORT CSV =====
