@@ -104,7 +104,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 function formatARS(x){ return "$" + Number(x||0).toLocaleString("es-AR"); }
 
 async function fetchNovia(noviaId){
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'sb-pecldmaxcqrgjmljpqmx-auth-token', lock: async (name, acquireTimeout, fn) => { return await fn(); } } });
 await sb.auth.getSession();
   // 1) nombre de la novia  -> ajustá 'novias' / 'nombre' / 'id' a tus columnas reales
   const { data: n } = await sb.from("novias").select("nombre").eq("id", noviaId).single();
