@@ -106,6 +106,10 @@ function formatARS(x){ return "$" + Number(x||0).toLocaleString("es-AR"); }
 async function fetchNovia(noviaId){
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'sb-pecldmaxcqrgjmljpqmx-auth-token', lock: async (name, acquireTimeout, fn) => { return await fn(); } } });
 await sb.auth.getSession();
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { await sb.auth.refreshSession(); }
+    } catch (e) { try { await sb.auth.refreshSession(); } catch (e2) {} }
   // 1) nombre de la novia  -> ajustá 'novias' / 'nombre' / 'id' a tus columnas reales
   const { data: n } = await sb.from("novias").select("nombre").eq("id", noviaId).single();
   // 2) piezas + variantes desde la vista v_presupuesto (ver schema.sql)
