@@ -2,7 +2,7 @@
 const sb = supabase.createClient(
   window.DELANUK_CONFIG.SUPABASE_URL,
   window.DELANUK_CONFIG.SUPABASE_KEY
-);
+, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'sb-pecldmaxcqrgjmljpqmx-auth-token', lock: async (name, acquireTimeout, fn) => { return await fn(); } } });
 
 // ===== ESTADO COMPARTIDO =====
 window.AppState = {
