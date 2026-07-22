@@ -52,3 +52,21 @@ function apiSubscribeRealtime(onChange) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'novias' }, onChange)
     .subscribe();
 }
+
+// ===== OPERACIONES SOBRE COMPRAS (facturas de proveedores) =====
+async function apiLoadCompras() {
+  const { data, error } = await sb.from('compras')
+    .select('*')
+    .order('fecha', { ascending: false })
+    .order('id', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(c => ({
+    ...c,
+    pagado: !!c.pagado,
+    monto: Number(c.monto) || 0,
+    items: Array.isArray(c.items) ? c.items : [],
+  }));
+}
+async function apiInsertCompra(data)     { return sb.from('compras').insert(data); }
+async function apiUpdateCompra(id, data) { return sb.from('compras').update(data).eq('id', id); }
+async function apiDeleteCompra(id)       { return sb.from('compras').delete().eq('id', id); }
