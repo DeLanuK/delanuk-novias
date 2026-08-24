@@ -17,10 +17,9 @@ window.AppState = {
 
 // ===== CONSTANTES DE DOMINIO =====
 const ETAPAS = [
-  'Primer contacto respondido','Presentacion enviada','Reunion de descubrimiento',
-  'Bocetos enviados','Diseno aprobado','Sena abonada','Produccion iniciada',
-  'Update semana 1','Update semana 2','Prueba final realizada','Ajustes aplicados',
-  'Saldo cobrado','Packaging preparado','Entrega realizada',
+    'Primer entrevista','Mandar presupuesto','Confirmo presupuesto',
+  'Pago la seña','Pieza en produccion','Pieza terminada',
+  'Saldo cobrado','Entrega realizada',
 ];
 function mkCheck(doneTo) {
   return ETAPAS.map((label, i) => ({ label, done: i < doneTo }));
