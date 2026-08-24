@@ -5,6 +5,7 @@ const BADGE_CLASS = {
   'Confirmado': 'b-conf',
   'Produccion': 'b-prod',
   'Entregado': 'b-entr',
+  'Cancelado': 'b-canc',
 };
 
 // ===== HELPERS GENERALES =====
