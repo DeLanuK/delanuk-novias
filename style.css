@@ -307,6 +307,7 @@ tr:hover td { background: var(--rose-xl); transition: background .1s; }
 .b-conf    { background: var(--blue-l);   color: var(--blue); }
 .b-prod    { background: var(--purple-l); color: var(--purple); }
 .b-entr    { background: var(--green-l);  color: var(--green); }
+.b-canc    { background: #FBE4E4;         color: #A32A2A; }
 .b-paid    { background: var(--green-l);  color: var(--green); }
 .b-partial { background: var(--yellow-l); color: var(--yellow); }
 .b-nopago  { background: #F0EDE8;         color: var(--ink-l); }
