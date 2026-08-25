@@ -1,27 +1,17 @@
 async function initAuth() {
-  // Si venimos de un link de recuperación del mail, mostramos la pantalla de nueva contraseña
-  if (detectRecoveryFromHash()) {
-    showResetScreen();
-    // escuchamos los eventos igual por si cambia el estado
-    sb.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') showResetScreen();
-    });
-    return;
-  }
-
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) await showApp(session);
-  else showLogin();
-
+  // Escuchamos los cambios de sesion SIEMPRE, pase lo que pase con el hash.
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
       showResetScreen();
-    } else if (event === 'SIGNED_IN' && session) {
-      // Si el usuario está en la pantalla de reset, NO lo metemos al app
-      const resetScreen = document.getElementById('reset-screen');
-      if (resetScreen && !resetScreen.classList.contains('hidden')) return;
+      return;
+    }
+    if (event === 'SIGNED_IN' && session) {
+      // Si esta eligiendo su nueva contrasena, no la metemos al app todavia.
+      if (enPantallaDeReset()) return;
       await showApp(session);
-    } else if (event === 'SIGNED_OUT') {
+      return;
+    }
+    if (event === 'SIGNED_OUT') {
       if (window.AppState.realtimeChannel) {
         sb.removeChannel(window.AppState.realtimeChannel);
         window.AppState.realtimeChannel = null;
@@ -29,6 +19,21 @@ async function initAuth() {
       showLogin();
     }
   });
+
+  // Si venimos del link de recuperacion del mail, mostramos la pantalla de nueva contrasena.
+  if (detectRecoveryFromHash()) {
+    showResetScreen();
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await showApp(session);
+  else showLogin();
+}
+
+function enPantallaDeReset() {
+  const r = document.getElementById('reset-screen');
+  return !!r && !r.classList.contains('hidden');
 }
 
 function showLogin() {
@@ -83,11 +88,47 @@ async function loadNovias() {
     showToast('Error cargando datos');
   }
 }
+// ============ MENSAJES DE ERROR EN CASTELLANO ============
+// Supabase devuelve el motivo real; antes lo tapabamos con un mensaje generico
+// y era imposible saber que estaba pasando.
+function mensajeDeError(error) {
+  if (!error) return '';
+  const code = (error.code || '').toLowerCase();
+  const msg = (error.message || '').toLowerCase();
+  console.error('[auth]', error.status, error.code, error.message);
+
+  if (code === 'invalid_credentials' || msg.includes('invalid login credentials'))
+    return 'Email o contrasena incorrectos. Revisa que el email sea exactamente el que figura en el panel.';
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed'))
+    return 'Ese usuario todavia no confirmo su email. Hay que confirmarlo desde Supabase.';
+  if (code === 'user_not_found' || msg.includes('user not found'))
+    return 'No existe ninguna cuenta con ese email.';
+  if (code === 'over_email_send_rate_limit' || msg.includes('rate limit'))
+    return 'Se enviaron demasiados mails en poco tiempo. Espera una hora y volve a intentar.';
+  if (code === 'over_request_rate_limit' || error.status === 429)
+    return 'Demasiados intentos seguidos. Espera unos minutos y volve a probar.';
+  if (code === 'same_password' || msg.includes('should be different'))
+    return 'La contrasena nueva tiene que ser distinta a la anterior.';
+  if (code === 'weak_password' || msg.includes('password should be'))
+    return 'La contrasena es muy debil. Usa al menos 6 caracteres.';
+  if (code === 'signup_disabled' || msg.includes('signups not allowed'))
+    return 'El registro esta deshabilitado. Los usuarios se crean desde Supabase.';
+  if (msg.includes('failed to fetch') || msg.includes('network'))
+    return 'No se pudo conectar con el servidor. Revisa tu conexion a internet.';
+  if (msg.includes('error sending'))
+    return 'El servidor no pudo enviar el mail. Hay que configurar un SMTP propio en Supabase.';
+
+  return 'Error: ' + (error.message || 'no se pudo completar la operacion') +
+         (error.code ? ' (' + error.code + ')' : '');
+}
+
 // ============ RECOVERY / RESET PASSWORD ============
 
 function detectRecoveryFromHash() {
   const hash = window.location.hash || '';
-  return hash.includes('type=recovery') || hash.includes('access_token=');
+  // OJO: solo el link de recuperacion. Antes tambien entraba con 'access_token='
+  // a secas, y eso dejaba a la usuaria trabada en la pantalla de reset.
+  return hash.includes('type=recovery');
 }
 
 function showForgotScreen() {
@@ -153,10 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const error = await sendRecoveryEmail(email);
       if (error) {
         msg.style.color = '#c00';
-        msg.textContent = 'Error: ' + error.message;
+        msg.textContent = mensajeDeError(error);
       } else {
         msg.style.color = '#0a7';
-        msg.textContent = '✅ Te enviamos un mail con el link para restablecer tu contraseña. Revisá también spam.';
+        msg.textContent = '✅ Si ese email tiene cuenta, te llega el link en unos minutos. Revisá también spam.';
       }
     });
   }
@@ -183,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const error = await updatePassword(p1);
       if (error) {
         msg.style.color = '#c00';
-        msg.textContent = 'Error: ' + error.message;
+        msg.textContent = mensajeDeError(error);
       } else {
         msg.style.color = '#0a7';
         msg.textContent = '✅ Contraseña actualizada. Redirigiendo al login...';
