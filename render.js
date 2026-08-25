@@ -62,6 +62,37 @@ function showToast(msg, type) {
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('show'), isError ? 5000 : 3200);
 }
+// Auto-archivar novias con estado "Entregado" y fecha de evento ya pasada
+async function autoArchivarEntregadas(novias) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const paraArchivar = novias.filter(n => {
+    if (n.archivada) return false;
+    if (n.estado !== 'Entregado') return false;
+    const d = parseDate(n.fecha);
+    if (d.getFullYear() >= 2099) return false; // sin fecha, no tocar
+    return d < hoy;
+  });
+  if (!paraArchivar.length) return;
+  for (const n of paraArchivar) {
+    try {
+      await apiSetArchivada(n.id, true);
+      n.archivada = true;
+    } catch (e) { console.error('Error auto-archivando novia', n.id, e); }
+  }
+  // Quitar las archivadas de la lista si no se están mostrando
+  if (!window.AppState.showArchived) {
+    window.AppState.novias = novias.filter(n => !n.archivada);
+    window._novias = window.AppState.novias;
+  }
+  if (paraArchivar.length === 1) {
+    showToast(paraArchivar[0].nombre + ' fue archivada automaticamente (entregada)');
+  } else if (paraArchivar.length > 1) {
+    showToast(paraArchivar.length + ' novias entregadas fueron archivadas automaticamente');
+  }
+}
+window.autoArchivarEntregadas = autoArchivarEntregadas;
+
 function isUrgent(n) {
   const d = parseDate(n.fecha);
   if (d.getFullYear() >= 2099) return false;
@@ -230,7 +261,22 @@ function renderDash() {
   const si = document.getElementById('dash-search');
   if (si && si.value !== window.AppState.dashSearch) si.value = window.AppState.dashSearch;
 
-  let filtered = [...novias].sort((a, b) => parseDate(a.fecha) - parseDate(b.fecha));
+  // Ordenar: proximas primero (futuro cercano arriba), pasadas despues, sin fecha al final
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  let filtered = [...novias].sort((a, b) => {
+    const da = parseDate(a.fecha), db = parseDate(b.fecha);
+    const aFut = da >= hoy && da.getFullYear() < 2099;
+    const bFut = db >= hoy && db.getFullYear() < 2099;
+    const aSin = da.getFullYear() >= 2099;
+    const bSin = db.getFullYear() >= 2099;
+    // Futuras primero, luego pasadas, luego sin fecha
+    if (aFut && !bFut) return -1;
+    if (!aFut && bFut) return 1;
+    if (aSin && !bSin) return 1;
+    if (!aSin && bSin) return -1;
+    // Dentro del mismo grupo, las mas proximas primero
+    return da - db;
+  });
   if (q) {
     filtered = filtered.filter(n =>
       (n.nombre || '').toLowerCase().includes(q) ||
