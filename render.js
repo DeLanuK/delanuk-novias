@@ -75,10 +75,22 @@ function igLink(handle) {
   const clean = handle.replace(/^@/, '').trim();
   return clean ? 'https://instagram.com/' + clean : null;
 }
-function nextAction(n) {
+const ETAPA_DISPLAY = {
+  'Primer entrevista': 'Entrevista realizada',
+  'Mandar presupuesto': 'Presupuesto enviado',
+  'Confirmo presupuesto': 'Presupuesto confirmado',
+  'Pago la seña': 'Seña cobrada',
+  'Pieza en produccion': 'En producción',
+  'Pieza terminada': 'Pieza terminada',
+  'Saldo cobrado': 'Saldo cobrado',
+  'Entrega realizada': 'Entrega realizada',
+};
+function lastCompleted(n) {
   if (!n.checklist) return null;
-  const item = n.checklist.find(c => !c.done);
-  return item ? item.label : null;
+  const doneItems = n.checklist.filter(c => c.done);
+  if (!doneItems.length) return null;
+  const last = doneItems[doneItems.length - 1];
+  return ETAPA_DISPLAY[last.label] || last.label;
 }
 function ingresosUltimos6Meses(novias) {
   const hoy = new Date();
@@ -166,17 +178,17 @@ function resolveHashRoute() {
 // ===== FILA REUTILIZABLE (PUNTO 12) =====
 function renderRow(n, contexto) {
   const saldo = n.total > 0 ? n.total - n.sena : null;
-  const next = nextAction(n);
+  const last = lastCompleted(n);
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
   const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
   const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
-  const nextLine = next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : '';
+  const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(next)}</span>` : '';
 
   if (contexto === 'dashboard') {
     return `
       <tr>
 <td><span class="td-name">${escapeHtml(n.nombre)}</span>${urg}${arch}</td>        <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
-        <td>${badge(n.estado)}${nextLine}</td>
+        <td>${badge(n.estado)}${lastLine}</td>
         ${piezasTd}
         <td><span class="td-muted">${escapeHtml(n.resp) || '-'}</span></td>
         <td class="amount ${saldo > 0 ? 'due' : ''}">${saldo !== null ? '$' + fmt(saldo) : '-'}</td>
@@ -199,7 +211,7 @@ function renderRow(n, contexto) {
       <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
       <td class="td-muted">${escapeHtml(n.ciudad) || '-'}</td>
       ${piezasTd}
-      <td>${badge(n.estado)}${nextLine}</td>
+      <td>${badge(n.estado)}${lastLine}</td>
       <td>${pagoBadge}</td>
       <td><div class="row-actions">
         <button class="row-btn" onclick="openFicha(${n.id})">Ficha</button>
@@ -395,9 +407,15 @@ async function saveNovia() {
     res = await apiUpdateNovia(window.AppState.editId, data);
   } else {
     data.checklist = mkCheck(0);
+    data.archivada = false;
+    data.pagos = [];
     res = await apiInsertNovia(data);
   }
   if (res.error) { alert('Error guardando: ' + res.error.message); return; }
+  if (window.AppState.editId && (!res.data || res.data.length === 0)) {
+    alert('No se pudo guardar. Verificá los permisos en la base de datos.');
+    return;
+  }
   closeModal('form');
   showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
   await loadNovias();

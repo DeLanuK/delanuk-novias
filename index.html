@@ -175,7 +175,7 @@
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Novia</th><th id="th-fecha" class="th-sort" onclick="noviaSort={col:'fecha',dir:noviaSort.col==='fecha'?-noviaSort.dir:1};renderNovias()">Fecha boda<span class="sort-arrow"> ↕</span></th><th>Ciudad</th><th>Piezas</th><th id="th-estado" class="th-sort" onclick="noviaSort={col:'estado',dir:noviaSort.col==='estado'?-noviaSort.dir:1};renderNovias()">Estado<span class="sort-arrow"> ↕</span></th><th>Pago</th><th id="th-saldo" class="th-sort" onclick="noviaSort={col:'saldo',dir:noviaSort.col==='saldo'?-noviaSort.dir:1};renderNovias()">Saldo<span class="sort-arrow"> ↕</span></th><th></th>
+              <th>Novia</th><th id="th-fecha" class="th-sort" onclick="window.AppState.noviaSort={col:'fecha',dir:window.AppState.noviaSort.col==='fecha'?-window.AppState.noviaSort.dir:1};renderNovias()">Fecha boda<span class="sort-arrow"> ↕</span></th><th>Ciudad</th><th>Piezas</th><th id="th-estado" class="th-sort" onclick="window.AppState.noviaSort={col:'estado',dir:window.AppState.noviaSort.col==='estado'?-window.AppState.noviaSort.dir:1};renderNovias()">Estado<span class="sort-arrow"> ↕</span></th><th>Pago</th><th id="th-saldo" class="th-sort" onclick="window.AppState.noviaSort={col:'saldo',dir:window.AppState.noviaSort.col==='saldo'?-window.AppState.noviaSort.dir:1};renderNovias()">Saldo<span class="sort-arrow"> ↕</span></th><th></th>
             </tr></thead>
             <tbody id="novias-tbody"></tbody>
           </table>
