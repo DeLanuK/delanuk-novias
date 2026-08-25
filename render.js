@@ -182,7 +182,7 @@ function renderRow(n, contexto) {
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
   const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
   const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
-  const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(next)}</span>` : '';
+  const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(last)}</span>` : '';
 
   if (contexto === 'dashboard') {
     return `
