@@ -308,10 +308,11 @@
       </div>
       <div id="ficha-body" class="ficha-body"></div>
       <div class="modal-foot">
-        <button class="btn-danger" onclick="deleteNovia(window.AppState.fichaId)">Eliminar</button>
+        <button class="btn-ghost" onclick="toggleArchivada(window.AppState.fichaId)" style="font-size:12px">Archivar</button>
         <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
         <button class="btn-primary" type="button" onclick="window.open('delanuk_presupuesto/presupuesto.html?novia=' + window.AppState.fichaId + '&print=1', '_blank')">Generar presupuesto</button>
         <button class="btn-primary" onclick="editFromFicha()">Editar</button>
+        <button class="btn-danger" onclick="deleteNovia(window.AppState.fichaId)" style="font-size:11px;padding:4px 10px;opacity:.7" title="Eliminar permanentemente">Eliminar</button>
       </div>
     </div>
   </div>

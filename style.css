@@ -596,8 +596,18 @@ textarea { resize: vertical; }
     transform: translateY(8px);
     transition: opacity .2s, transform .2s;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 360px;
 }
-.toast.show { opacity: 1; transform: translateY(0); }
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast-error { background: #c0392b; }
+.toast-close {
+    background: none; border: none; color: #fff; font-size: 18px;
+    cursor: pointer; padding: 0 0 0 4px; line-height: 1; opacity: .8;
+}
+.toast-close:hover { opacity: 1; }
 
 /* ── EMPTY ────────────────────────────────────────────────────────────── */
 .empty { text-align: center; padding: 40px 20px; color: var(--ink-l); font-size: 13px; }

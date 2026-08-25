@@ -52,10 +52,15 @@ function escapeHtml(s) {
   if (s === null || s === undefined) return '';
   return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 }
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+  t.className = 'toast'; // reset classes
+  const isError = type === 'error' || (!type && /error|no se pudo|falta/i.test(msg));
+  if (isError) t.classList.add('toast-error');
+  t.innerHTML = '<span>' + msg + '</span><button class="toast-close" onclick="this.parentElement.classList.remove(\'show\')">&times;</button>';
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), isError ? 5000 : 3200);
 }
 function isUrgent(n) {
   const d = parseDate(n.fecha);
@@ -75,22 +80,10 @@ function igLink(handle) {
   const clean = handle.replace(/^@/, '').trim();
   return clean ? 'https://instagram.com/' + clean : null;
 }
-const ETAPA_DISPLAY = {
-  'Primer entrevista': 'Entrevista realizada',
-  'Mandar presupuesto': 'Presupuesto enviado',
-  'Confirmo presupuesto': 'Presupuesto confirmado',
-  'Pago la seña': 'Seña cobrada',
-  'Pieza en produccion': 'En producción',
-  'Pieza terminada': 'Pieza terminada',
-  'Saldo cobrado': 'Saldo cobrado',
-  'Entrega realizada': 'Entrega realizada',
-};
-function lastCompleted(n) {
+function nextAction(n) {
   if (!n.checklist) return null;
-  const doneItems = n.checklist.filter(c => c.done);
-  if (!doneItems.length) return null;
-  const last = doneItems[doneItems.length - 1];
-  return ETAPA_DISPLAY[last.label] || last.label;
+  const item = n.checklist.find(c => !c.done);
+  return item ? item.label : null;
 }
 function ingresosUltimos6Meses(novias) {
   const hoy = new Date();
@@ -178,17 +171,17 @@ function resolveHashRoute() {
 // ===== FILA REUTILIZABLE (PUNTO 12) =====
 function renderRow(n, contexto) {
   const saldo = n.total > 0 ? n.total - n.sena : null;
-  const last = lastCompleted(n);
+  const next = nextAction(n);
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
   const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
   const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
-  const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(last)}</span>` : '';
+  const nextLine = next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : '';
 
   if (contexto === 'dashboard') {
     return `
       <tr>
 <td><span class="td-name">${escapeHtml(n.nombre)}</span>${urg}${arch}</td>        <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
-        <td>${badge(n.estado)}${lastLine}</td>
+        <td>${badge(n.estado)}${nextLine}</td>
         ${piezasTd}
         <td><span class="td-muted">${escapeHtml(n.resp) || '-'}</span></td>
         <td class="amount ${saldo > 0 ? 'due' : ''}">${saldo !== null ? '$' + fmt(saldo) : '-'}</td>
@@ -211,7 +204,7 @@ function renderRow(n, contexto) {
       <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
       <td class="td-muted">${escapeHtml(n.ciudad) || '-'}</td>
       ${piezasTd}
-      <td>${badge(n.estado)}${lastLine}</td>
+      <td>${badge(n.estado)}${nextLine}</td>
       <td>${pagoBadge}</td>
       <td><div class="row-actions">
         <button class="row-btn" onclick="openFicha(${n.id})">Ficha</button>
@@ -385,7 +378,10 @@ function closeModal(which) {
 
 async function saveNovia() {
   const nombre = document.getElementById('f-nombre').value.trim();
-  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
+  const btn = document.querySelector('#overlay-form .btn-primary[onclick="saveNovia()"]');
+  const txtOrig = btn ? btn.textContent : 'Guardar';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
   const data = {
     nombre,
     fecha:  document.getElementById('f-fecha').value.trim(),
@@ -407,11 +403,10 @@ async function saveNovia() {
     res = await apiUpdateNovia(window.AppState.editId, data);
   } else {
     data.checklist = mkCheck(0);
-    data.archivada = false;
-    data.pagos = [];
     res = await apiInsertNovia(data);
   }
-  if (res.error) { alert('Error guardando: ' + res.error.message); return; }
+  if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
+  if (res.error) { showToast('Error guardando: ' + res.error.message, 'error'); return; }
   closeModal('form');
   showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
   await loadNovias();
@@ -420,11 +415,11 @@ async function saveNovia() {
 async function deleteNovia(id) {
   const n = window.AppState.novias.find(x => x.id === id);
   if (!n) return;
-  if (!confirm(`¿Eliminar a ${n.nombre}? Esta acción no se puede deshacer.`)) return;
+  if (!confirm(`¿Eliminar PERMANENTEMENTE a ${n.nombre}?\n\nEsta acción NO se puede deshacer.\nSi solo querés sacarla de la lista, usá "Archivar".`)) return;
   const { error } = await apiDeleteNovia(id);
-  if (error) { showToast('Error al eliminar'); return; }
+  if (error) { showToast('Error al eliminar', 'error'); return; }
   closeModal('ficha');
-  showToast(`${n.nombre} eliminada`);
+  showToast(`${n.nombre} eliminada permanentemente`);
   await loadNovias();
 }
 
