@@ -412,10 +412,6 @@ async function saveNovia() {
     res = await apiInsertNovia(data);
   }
   if (res.error) { alert('Error guardando: ' + res.error.message); return; }
-  if (window.AppState.editId && (!res.data || res.data.length === 0)) {
-    alert('No se pudo guardar. Verificá los permisos en la base de datos.');
-    return;
-  }
   closeModal('form');
   showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
   await loadNovias();
