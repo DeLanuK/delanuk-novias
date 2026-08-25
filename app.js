@@ -1,15 +1,31 @@
 // ===== EVENTOS DE LOGIN =====
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-submit');
   const err = document.getElementById('login-error');
   err.textContent = '';
   btn.textContent = 'Ingresando...'; btn.disabled = true;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  let data = null, error = null;
+  try {
+    ({ data, error } = await sb.auth.signInWithPassword({ email, password }));
+  } catch (ex) {
+    error = ex;
+  }
   btn.disabled = false; btn.textContent = 'Ingresar';
-  if (error) err.textContent = 'Email o contrasena incorrectos';
+
+  if (error) {
+    err.textContent = mensajeDeError(error);
+    return;
+  }
+  // Entramos al panel aca mismo, sin depender de que el evento SIGNED_IN llegue.
+  if (data && data.session) {
+    await showApp(data.session);
+  } else {
+    err.textContent = 'La sesion no se pudo abrir. Recarga la pagina e intenta de nuevo.';
+  }
 });
 
 ['btn-logout', 'btn-logout-mobile'].forEach(id => {
