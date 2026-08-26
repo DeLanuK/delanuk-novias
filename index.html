@@ -128,7 +128,7 @@
           <button class="mobile-logout" id="btn-logout-mobile" title="Cerrar sesión">⎋</button>
         </div>
         <div class="search-bar-wrap">
-          <input class="search-bar" id="dash-search" type="search" placeholder="Buscar en panel..." oninput="dashSearch=this.value;renderDash()">
+          <input class="search-bar" id="dash-search" type="search" placeholder="Buscar en panel..." oninput="window.AppState.dashSearch=this.value;renderDash()">
         </div>
         <div class="kpi-row" id="kpi-row"></div>
         <div class="section-row"><div class="section-label">Novias activas · orden cronológico</div><button class="btn-export" onclick="exportCSV()">&#8595; Exportar CSV</button></div>
