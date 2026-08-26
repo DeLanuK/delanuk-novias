@@ -111,10 +111,22 @@ function igLink(handle) {
   const clean = handle.replace(/^@/, '').trim();
   return clean ? 'https://instagram.com/' + clean : null;
 }
-function nextAction(n) {
+const ETAPA_DISPLAY = {
+  'Primer entrevista': 'Entrevista realizada',
+  'Mandar presupuesto': 'Presupuesto enviado',
+  'Confirmo presupuesto': 'Presupuesto confirmado',
+  'Pago la seña': 'Seña cobrada',
+  'Pieza en produccion': 'En producción',
+  'Pieza terminada': 'Pieza terminada',
+  'Saldo cobrado': 'Saldo cobrado',
+  'Entrega realizada': 'Entrega realizada',
+};
+function lastCompleted(n) {
   if (!n.checklist) return null;
-  const item = n.checklist.find(c => !c.done);
-  return item ? item.label : null;
+  const doneItems = n.checklist.filter(c => c.done);
+  if (!doneItems.length) return null;
+  const last = doneItems[doneItems.length - 1];
+  return ETAPA_DISPLAY[last.label] || last.label;
 }
 function ingresosUltimos6Meses(novias) {
   const hoy = new Date();
@@ -202,17 +214,17 @@ function resolveHashRoute() {
 // ===== FILA REUTILIZABLE (PUNTO 12) =====
 function renderRow(n, contexto) {
   const saldo = n.total > 0 ? n.total - n.sena : null;
-  const next = nextAction(n);
+  const last = lastCompleted(n);
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
   const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
   const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
-  const nextLine = next ? `<br><span class="next-action">▶ ${escapeHtml(next)}</span>` : '';
+  const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(last)}</span>` : '';
 
   if (contexto === 'dashboard') {
     return `
       <tr>
 <td><span class="td-name">${escapeHtml(n.nombre)}</span>${urg}${arch}</td>        <td><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
-        <td>${badge(n.estado)}${nextLine}</td>
+        <td>${badge(n.estado)}${lastLine}</td>
         ${piezasTd}
         <td><span class="td-muted">${escapeHtml(n.resp) || '-'}</span></td>
         <td class="amount ${saldo > 0 ? 'due' : ''}">${saldo !== null ? '$' + fmt(saldo) : '-'}</td>
@@ -235,7 +247,7 @@ function renderRow(n, contexto) {
       <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
       <td class="td-muted">${escapeHtml(n.ciudad) || '-'}</td>
       ${piezasTd}
-      <td>${badge(n.estado)}${nextLine}</td>
+      <td>${badge(n.estado)}${lastLine}</td>
       <td>${pagoBadge}</td>
       <td><div class="row-actions">
         <button class="row-btn" onclick="openFicha(${n.id})">Ficha</button>
@@ -428,34 +440,42 @@ async function saveNovia() {
   const btn = document.querySelector('#overlay-form .btn-primary[onclick="saveNovia()"]');
   const txtOrig = btn ? btn.textContent : 'Guardar';
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
-  const data = {
-    nombre,
-    fecha:  document.getElementById('f-fecha').value.trim(),
-    tel:    document.getElementById('f-tel').value.trim(),
-    ig:     document.getElementById('f-ig').value.trim(),
-    ciudad: document.getElementById('f-ciudad').value.trim(),
-    tipo:   document.getElementById('f-tipo').value,
-    rol:    document.getElementById('f-rol').value,
-    resp:   document.getElementById('f-resp').value,
-    estado: document.getElementById('f-estado').value,
-    total:  parseInt(document.getElementById('f-total').value) || 0,
-    sena:   parseInt(document.getElementById('f-sena').value) || 0,
-    fsena:  document.getElementById('f-fsena').value.trim(),
-    piezas: document.getElementById('f-piezas').value.trim(),
-    notas:  document.getElementById('f-notas').value.trim(),
-  };
-  let res;
-  if (window.AppState.editId) {
-    res = await apiUpdateNovia(window.AppState.editId, data);
-  } else {
-    data.checklist = mkCheck(0);
-    res = await apiInsertNovia(data);
+  try {
+    const data = {
+      nombre,
+      fecha:  document.getElementById('f-fecha').value.trim(),
+      tel:    document.getElementById('f-tel').value.trim(),
+      ig:     document.getElementById('f-ig').value.trim(),
+      ciudad: document.getElementById('f-ciudad').value.trim(),
+      tipo:   document.getElementById('f-tipo').value,
+      rol:    document.getElementById('f-rol').value,
+      resp:   document.getElementById('f-resp').value,
+      estado: document.getElementById('f-estado').value,
+      total:  parseInt(document.getElementById('f-total').value) || 0,
+      sena:   parseInt(document.getElementById('f-sena').value) || 0,
+      fsena:  document.getElementById('f-fsena').value.trim(),
+      piezas: document.getElementById('f-piezas').value.trim(),
+      notas:  document.getElementById('f-notas').value.trim(),
+    };
+    let res;
+    if (window.AppState.editId) {
+      res = await apiUpdateNovia(window.AppState.editId, data);
+    } else {
+      data.checklist = mkCheck(0);
+      data.archivada = false;
+      data.pagos = [];
+      res = await apiInsertNovia(data);
+    }
+    if (res.error) { showToast('Error guardando: ' + res.error.message, 'error'); return; }
+    closeModal('form');
+    showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
+    await loadNovias();
+  } catch (e) {
+    console.error('Error en saveNovia:', e);
+    showToast('Error guardando: ' + (e.message || 'error desconocido'), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
   }
-  if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
-  if (res.error) { showToast('Error guardando: ' + res.error.message, 'error'); return; }
-  closeModal('form');
-  showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
-  await loadNovias();
 }
 
 async function deleteNovia(id) {

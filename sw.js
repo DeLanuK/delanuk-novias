@@ -11,10 +11,10 @@ const ARCHIVOS_BASE = [
   './render.js',
   './auth.js',
   './app.js',
+  './compras.js',
   './manifest.json',
   './logo.png',
   './logo-blanco.png',
-  './compras.js',
 ];
 
 // Al instalarse, guarda los archivos base en la caché
