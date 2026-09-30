@@ -484,9 +484,11 @@
       /* Celular: menú de compartir con el PDF adjunto -> elegir WhatsApp y el chat */
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], title: 'Presupuesto DELANUK', text: texto });
-          btn.textContent = 'Enviado ✓';
+          await navigator.share({ files: [file], title: 'Presupuesto DELANUK' });
+          btn.textContent = 'PDF enviado ✓ · abriendo el chat...';
           setTimeout(function() { btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp'; }, 2500);
+          /* Después de compartir el PDF, abrir el chat de la novia con el mensaje */
+          setTimeout(function() { location.href = urlChat; }, 800);
           return;
         } catch (e) { if (e && e.name === 'AbortError') { btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp'; return; } }
       }
