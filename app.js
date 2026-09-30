@@ -47,7 +47,16 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     if (view === 'dashboard') renderDash();
     if (view === 'novias') renderNovias();
     if (view === 'pagos') renderPagos();
+    if (view === 'entregadas') renderEntregadas();
   });
+});
+
+// ===== AL VOLVER A LA APP (celu en segundo plano): refrescar sesión y datos =====
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  if (document.getElementById('app').style.display === 'none') return;
+  try { await sb.auth.getSession(); } catch (e) {}
+  if (typeof loadNovias === 'function') loadNovias();
 });
 
 // ===== BOTONES DE "AGREGAR NOVIA" =====

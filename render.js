@@ -97,8 +97,7 @@ function isUrgent(n) {
   const d = parseDate(n.fecha);
   if (d.getFullYear() >= 2099) return false;
   const daysUntil = (d - new Date()) / 86400000;
-  const saldo = (n.total || 0) - (n.sena || 0);
-  return daysUntil >= 0 && daysUntil < 30 && saldo > 0;
+  return daysUntil >= 0 && daysUntil < 30 && saldoDe(n) > 0;
 }
 function waLink(tel) {
   const digits = (tel || '').replace(/\D/g, '');
@@ -112,15 +111,16 @@ function igLink(handle) {
   return clean ? 'https://instagram.com/' + clean : null;
 }
 const ETAPA_DISPLAY = {
-  'Primer entrevista': 'Entrevista realizada',
   'Mandar presupuesto': 'Presupuesto enviado',
-  'Confirmo presupuesto': 'Presupuesto confirmado',
   'Pago la seña': 'Seña cobrada',
-  'Pieza en produccion': 'En producción',
   'Pieza terminada': 'Pieza terminada',
-  'Saldo cobrado': 'Saldo cobrado',
   'Entrega realizada': 'Entrega realizada',
+  'Pago realizado': 'Pago realizado',
 };
+const TRABAJOS = ['Orfebrería', 'Ensamble', 'Ambas'];
+function trabajoChip(t) {
+  return t ? `<span class="chip-trabajo">${escapeHtml(t)}</span>` : '';
+}
 function lastCompleted(n) {
   if (!n.checklist) return null;
   const doneItems = n.checklist.filter(c => c.done);
@@ -153,7 +153,7 @@ function ingresosUltimos6Meses(novias) {
 
 // ===== TEMPLATE DE WHATSAPP (PUNTO 9) =====
 function waMessage(n) {
-  const saldo = (n.total || 0) - (n.sena || 0);
+  const saldo = saldoDe(n);
   const piezas = (n.piezas || '').trim() || 'tu pedido';
   const fecha = (n.fecha || '').trim() || 'fecha a confirmar';
   const nombre = (n.nombre || '').split(' ')[0];
@@ -166,6 +166,7 @@ function waMessage(n) {
   ];
   if (n.total > 0) {
     lineas.push(`• Presupuesto: $${fmt(n.total)}`);
+    if (n.sena_cita > 0) lineas.push(`• Seña de la cita: $${fmt(n.sena_cita)}`);
     lineas.push(`• Cobrado: $${fmt(n.sena || 0)}`);
     lineas.push(`• Saldo pendiente: $${fmt(saldo)}`);
   }
@@ -213,11 +214,11 @@ function resolveHashRoute() {
 
 // ===== FILA REUTILIZABLE (PUNTO 12) =====
 function renderRow(n, contexto) {
-  const saldo = n.total > 0 ? n.total - n.sena : null;
+  const saldo = n.total > 0 ? saldoDe(n) : null;
   const last = lastCompleted(n);
   const urg = isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : '';
   const arch = n.archivada ? ' <span class="badge b-archived">Archivada</span>' : '';
-  const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}</td>`;
+  const piezasTd = `<td class="td-piezas td-muted" title="${escapeHtml(n.piezas || '')}">${escapeHtml(n.piezas) || '-'}${n.trabajo ? '<br>' + trabajoChip(n.trabajo) : ''}</td>`;
   const lastLine = last ? `<br><span class="next-action">✓ ${escapeHtml(last)}</span>` : '';
 
   if (contexto === 'dashboard') {
@@ -234,9 +235,24 @@ function renderRow(n, contexto) {
 
   const pagoBadge = n.total > 0
     ? (saldo === 0 ? `<span class="badge b-paid">Pagado</span>`
-        : n.sena > 0 ? `<span class="badge b-partial">Sena</span>`
-        : `<span class="badge b-nopago">Sin sena</span>`)
+        : cobradoDe(n) > 0 ? `<span class="badge b-partial">Seña</span>`
+        : `<span class="badge b-nopago">Sin seña</span>`)
     : `<span class="td-muted">-</span>`;
+
+  if (contexto === 'entregadas') {
+    const ent = (n.checklist || []).find(c => c.label === 'Entrega realizada' && c.done && c.fechaDone);
+    const fEnt = ent ? new Date(ent.fechaDone).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+    return `
+    <tr>
+      <td><span class="td-name">${escapeHtml(n.nombre)}</span>${arch}${n.resp ? `<br><span class="td-muted">${escapeHtml(n.resp)}</span>` : ''}</td>
+      <td class="td-muted">${escapeHtml(n.fecha) || '-'}</td>
+      <td class="td-muted">${escapeHtml(n.ciudad) || '-'}</td>
+      ${piezasTd}
+      <td class="td-muted">${fEnt}</td>
+      <td class="amount">${n.total > 0 ? '$' + fmt(n.total) : '-'}</td>
+      <td><div class="row-actions"><button class="row-btn" onclick="openFicha(${n.id})">Ficha</button></div></td>
+    </tr>`;
+  }
 
   return `
     <tr>
@@ -251,18 +267,17 @@ function renderRow(n, contexto) {
       <td>${pagoBadge}</td>
       <td><div class="row-actions">
         <button class="row-btn" onclick="openFicha(${n.id})">Ficha</button>
-        <button class="row-btn" onclick="openModal('edit',${n.id})">Editar</button>
       </div></td>
     </tr>`;
 }
 
 // ===== DASHBOARD =====
 function renderDash() {
-  const novias = window.AppState.novias.filter(n => !n.archivada);
+  const novias = window.AppState.novias.filter(n => !n.archivada && !isEntregada(n));
   const q = window.AppState.dashSearch.toLowerCase();
   const pend = novias.filter(n => n.estado === 'Pendiente').length;
   const conf = novias.filter(n => n.estado === 'Confirmado').length;
-  const saldoTotal = novias.reduce((a, n) => a + ((n.total || 0) - (n.sena || 0)), 0);
+  const saldoTotal = novias.reduce((a, n) => a + (n.total > 0 ? Math.max(0, saldoDe(n)) : 0), 0);
   document.getElementById('dash-subtitle').textContent = `${novias.length} novias activas`;
   document.getElementById('kpi-row').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Novias activas</div><div class="kpi-val rose">${novias.length}</div></div>
@@ -313,7 +328,7 @@ function renderDash() {
 
 // ===== LISTA DE NOVIAS =====
 function renderNovias() {
-  const novias = window.AppState.novias;
+  const novias = window.AppState.novias.filter(n => !isEntregada(n));
   const q = (document.getElementById('search').value || '').toLowerCase();
   const est = document.getElementById('filter-estado').value;
   const { col, dir } = window.AppState.noviaSort;
@@ -326,7 +341,7 @@ function renderNovias() {
     .sort((a, b) => {
       if (col === 'fecha')  return dir * (parseDate(a.fecha) - parseDate(b.fecha));
       if (col === 'estado') return dir * (a.estado || '').localeCompare(b.estado || '');
-      if (col === 'saldo')  return dir * (((a.total||0)-(a.sena||0)) - ((b.total||0)-(b.sena||0)));
+      if (col === 'saldo')  return dir * (saldoDe(a) - saldoDe(b));
       return 0;
     });
   ['fecha','estado','saldo'].forEach(c => {
@@ -346,12 +361,40 @@ function renderNovias() {
 }
 
 // ===== PAGOS =====
+function pagoCell(n, campo, tipo) {
+  const v = n[campo];
+  const val = tipo === 'num' ? (v ? v : '') : (v || '');
+  return `<input class="cell-input${tipo === 'num' ? ' cell-num' : ''}" type="${tipo === 'num' ? 'number' : 'text'}" ${tipo === 'num' ? 'min="0" inputmode="numeric"' : ''} value="${escapeHtml(val)}" placeholder="${tipo === 'num' ? '0' : 'dd/mm'}" onchange="savePagoCell(${n.id}, '${campo}', this)">`;
+}
+async function savePagoCell(nid, campo, input) {
+  const n = window.AppState.novias.find(x => x.id === nid);
+  if (!n) return;
+  const numeric = ['total', 'sena', 'sena_cita'].includes(campo);
+  const nuevo = numeric ? (parseInt(input.value) || 0) : input.value.trim();
+  const anterior = n[campo];
+  if (nuevo === anterior) return;
+  n[campo] = nuevo;
+  input.classList.add('saving');
+  const { error } = await apiUpdateNovia(nid, { [campo]: nuevo });
+  input.classList.remove('saving');
+  if (error) {
+    n[campo] = anterior;
+    showToast('Error guardando: ' + (error.message || ''), 'error');
+  } else {
+    showToast('Guardado');
+  }
+  renderPagos();
+  renderDash();
+}
+window.savePagoCell = savePagoCell;
+
 function renderPagos() {
-  const novias = window.AppState.novias.filter(n => !n.archivada);
-  const withPago = novias.filter(n => (n.total || 0) > 0 || (n.sena || 0) > 0);
+  const novias = window.AppState.novias.filter(n => !n.archivada && !isEntregada(n));
+  const withPago = novias.filter(n => (n.total || 0) > 0 || cobradoDe(n) > 0);
   const totalM = withPago.reduce((a, n) => a + (n.total || 0), 0);
-  const totalC = withPago.reduce((a, n) => a + (n.sena || 0), 0);
-  const totalS = totalM - totalC;
+  const totalC = withPago.reduce((a, n) => a + cobradoDe(n), 0);
+  // Solo suma saldo de las que ya tienen presupuesto (una seña de cita sola no genera saldo)
+  const totalS = withPago.reduce((a, n) => a + (n.total > 0 ? Math.max(0, saldoDe(n)) : 0), 0);
   document.getElementById('kpi-pagos').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Total facturado</div><div class="kpi-val">$${fmt(totalM)}</div></div>
     <div class="kpi-card"><div class="kpi-label">Total cobrado</div><div class="kpi-val green">$${fmt(totalC)}</div></div>
@@ -359,23 +402,28 @@ function renderPagos() {
     <div class="kpi-card"><div class="kpi-label">Novias con pago</div><div class="kpi-val">${withPago.length}</div></div>
   `;
   const tbody = document.getElementById('pagos-tbody');
-  if (!withPago.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">No hay pagos registrados</td></tr>`;
+  // En Pagos se listan todas las activas, así se puede cargar la seña de la cita antes del presupuesto
+  const lista = [...novias].sort((a, b) => parseDate(a.fecha) - parseDate(b.fecha));
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">No hay novias activas</td></tr>`;
     return;
   }
   tbody.innerHTML = '';
-  withPago.forEach(n => {
-    const saldo = (n.total || 0) - (n.sena || 0);
-    const estBadge = saldo === 0 ? `<span class="badge b-paid">Pagado</span>`
-      : n.sena > 0 ? `<span class="badge b-partial">Sena</span>`
-      : `<span class="badge b-nopago">Sin sena</span>`;
+  lista.forEach(n => {
+    const saldo = saldoDe(n);
+    const estBadge = n.total > 0
+      ? (saldo <= 0 ? `<span class="badge b-paid">Pagado</span>`
+        : cobradoDe(n) > 0 ? `<span class="badge b-partial">Seña</span>`
+        : `<span class="badge b-nopago">Sin seña</span>`)
+      : (n.sena_cita > 0 ? `<span class="badge b-partial">Seña cita</span>` : `<span class="td-muted">-</span>`);
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
         <td><span class="td-name">${escapeHtml(n.nombre)}</span><br><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
-        <td class="amount">$${fmt(n.total)}</td>
-        <td class="amount paid">$${fmt(n.sena)}</td>
-        <td class="td-muted">${escapeHtml(n.fsena) || '-'}</td>
-        <td class="amount ${saldo > 0 ? 'due' : ''}">$${fmt(saldo)}</td>
+        <td class="amount">${pagoCell(n, 'total', 'num')}</td>
+        <td class="amount">${pagoCell(n, 'sena_cita', 'num')}</td>
+        <td class="amount paid">${pagoCell(n, 'sena', 'num')}</td>
+        <td class="td-muted">${pagoCell(n, 'fsena', 'text')}</td>
+        <td class="amount ${saldo > 0 ? 'due' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</td>
         <td>${estBadge}</td>
       </tr>`);
   });
@@ -421,6 +469,8 @@ function openModal(mode, id) {
   document.getElementById('f-total').value  = n && n.total ? n.total : '';
   document.getElementById('f-sena').value   = n && n.sena ? n.sena  : '';
   document.getElementById('f-fsena').value  = n ? (n.fsena || '')  : '';
+  document.getElementById('f-sena-cita').value = n && n.sena_cita ? n.sena_cita : '';
+  document.getElementById('f-trabajo').value = n ? (n.trabajo || '') : '';
   document.getElementById('f-piezas').value = n ? (n.piezas || '') : '';
   document.getElementById('f-notas').value  = n ? (n.notas || '')  : '';
   document.getElementById('overlay-form').classList.add('open');
@@ -454,12 +504,15 @@ async function saveNovia() {
       total:  parseInt(document.getElementById('f-total').value) || 0,
       sena:   parseInt(document.getElementById('f-sena').value) || 0,
       fsena:  document.getElementById('f-fsena').value.trim(),
+      sena_cita: parseInt(document.getElementById('f-sena-cita').value) || 0,
+      trabajo: document.getElementById('f-trabajo').value,
       piezas: document.getElementById('f-piezas').value.trim(),
       notas:  document.getElementById('f-notas').value.trim(),
     };
     let res;
-    if (window.AppState.editId) {
-      res = await apiUpdateNovia(window.AppState.editId, data);
+    const editId = window.AppState.editId;
+    if (editId) {
+      res = await apiUpdateNovia(editId, data);
     } else {
       data.checklist = mkCheck(0);
       data.archivada = false;
@@ -468,14 +521,26 @@ async function saveNovia() {
     }
     if (res.error) { showToast('Error guardando: ' + res.error.message, 'error'); return; }
     closeModal('form');
-    showToast(window.AppState.editId ? 'Novia actualizada' : 'Novia agregada');
-    await loadNovias();
+    showToast(editId ? 'Novia actualizada' : 'Novia agregada');
+    // Reflejar en pantalla al instante, sin esperar a la recarga
+    if (editId) {
+      const n = window.AppState.novias.find(x => x.id === editId);
+      if (n) Object.assign(n, data);
+    } else if (res.data && res.data.id) {
+      window.AppState.novias.push({ ...res.data, checklist: normalizeChecklist(res.data.checklist), pagos: [], sena_cita: Number(res.data.sena_cita) || 0, trabajo: res.data.trabajo || '' });
+    }
+    window.AppState.editId = null;
+    renderDash(); renderNovias(); renderPagos();
   } catch (e) {
     console.error('Error en saveNovia:', e);
-    showToast('Error guardando: ' + (e.message || 'error desconocido'), 'error');
+    const msg = e && e.message === 'timeout' ? 'La conexión no respondió. Revisá internet y probá de nuevo.' : 'Error guardando: ' + ((e && e.message) || 'error desconocido');
+    showToast(msg, 'error');
+    return;
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = txtOrig; }
   }
+  // Recarga completa en segundo plano (no bloquea el botón)
+  loadNovias();
 }
 
 async function deleteNovia(id) {
@@ -511,10 +576,22 @@ async function toggleArchivada(id) {
   renderDash();
   renderNovias();
   renderPagos();
+  if (document.getElementById('view-entregadas').classList.contains('active')) renderEntregadas();
 }
 window.toggleArchivada = toggleArchivada;
 
 // ===== FICHA =====
+function fichaInput(n, campo, label, tipo = 'text', extra = '') {
+  const v = n[campo];
+  const val = tipo === 'number' ? (v ? v : '') : (v || '');
+  return `<div class="fg"><label>${label}</label><input id="fi-${campo}" type="${tipo}" value="${escapeHtml(val)}" ${extra}></div>`;
+}
+function fichaSelect(n, campo, label, opciones, permitirVacio) {
+  const v = n[campo] || '';
+  const opts = (permitirVacio ? [''] : []).concat(opciones).map(o =>
+    `<option value="${escapeHtml(o)}" ${o === v ? 'selected' : ''}>${o === '' ? '— Sin asignar —' : escapeHtml(o)}</option>`).join('');
+  return `<div class="fg"><label>${label}</label><select id="fi-${campo}">${opts}</select></div>`;
+}
 function openFicha(id, opts = {}) {
   window.AppState.fichaId = id;
   const n = window.AppState.novias.find(x => x.id === id);
@@ -526,26 +603,22 @@ function openFicha(id, opts = {}) {
   }
 
   const done = n.checklist.filter(c => c.done).length;
-  const saldo = (n.total || 0) - (n.sena || 0);
+  const saldo = saldoDe(n);
   const wa = waLink(n.tel);
   const ig = igLink(n.ig);
   const waMsg = wa ? waLinkWithMessage(n) : null;
+  const entregada = isEntregada(n);
 
   document.getElementById('ficha-name').textContent = n.nombre;
   document.getElementById('ficha-body').innerHTML = `
    <div class="ficha-hero">
   <div>
-    <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}${n.archivada ? ' <span class="badge b-archived">Archivada</span>' : ''}</div>
+    <div class="ficha-hero-name">${escapeHtml(n.nombre)} ${badge(n.estado)}${isUrgent(n) ? ' <span class="badge b-urgent">Urgente</span>' : ''}${n.archivada ? ' <span class="badge b-archived">Archivada</span>' : ''}${n.trabajo ? ' ' + trabajoChip(n.trabajo) : ''}</div>
     <div class="ficha-hero-sub">
       ${escapeHtml(n.fecha) || 'Fecha a confirmar'} - ${escapeHtml(n.ciudad) || '-'} - ${escapeHtml(n.tipo) || '-'}<br>
       ${escapeHtml(n.rol || '')}${n.resp ? ' - Responsable: ' + escapeHtml(n.resp) : ''}
     </div>
   </div>
-</div>
-<div style="margin-top:8px">
-  <button class="btn-ghost" onclick="toggleArchivada(${n.id})" style="font-size:12px;padding:6px 12px">
-    ${n.archivada ? '↩ Desarchivar' : '🗄 Archivar'}
-  </button>
 </div>
     ${(wa || ig) ? `<div class="ficha-sec">Contacto</div>
       <div class="contact-row">
@@ -553,11 +626,14 @@ function openFicha(id, opts = {}) {
         ${wa ? `<button class="chip chip-action" type="button" onclick="copyWaMessage(${n.id})" title="Copiar mensaje con saldo, fecha y piezas">📋 Copiar mensaje</button>` : ''}
         ${ig ? `<a class="chip chip-link" href="${ig}" target="_blank" rel="noopener">Instagram · ${escapeHtml(n.ig)}</a>` : ''}
       </div>` : ''}
-    ${n.piezas ? `<div class="ficha-sec">Piezas encargadas</div><div class="ficha-piezas">${escapeHtml(n.piezas)}</div>` : ''}
-    ${n.notas ? `<div class="ficha-sec">Notas internas</div><div class="ficha-notas">${escapeHtml(n.notas)}</div>` : ''}
+
+    <div class="ficha-sec">Proceso - ${done}/${n.checklist.length} etapas completadas${entregada ? ' · <span class="badge b-entr">Entregada</span>' : ''}</div>
+    <div class="checklist" id="checklist-${id}"></div>
+
     <div class="ficha-sec">Pagos</div>
-    <div class="pago-cards">
+    <div class="pago-cards pago-cards-4">
       <div class="pago-card"><div class="pc-label">Presupuesto</div><div class="pc-val rose">${n.total > 0 ? '$' + fmt(n.total) : '-'}</div></div>
+      <div class="pago-card"><div class="pc-label">Seña cita</div><div class="pc-val">${n.sena_cita > 0 ? '$' + fmt(n.sena_cita) : '-'}</div></div>
       <div class="pago-card"><div class="pc-label">Cobrado</div><div class="pc-val green">${n.sena > 0 ? '$' + fmt(n.sena) : '-'}</div></div>
       <div class="pago-card"><div class="pc-label">Saldo</div><div class="pc-val ${saldo > 0 ? 'red' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</div></div>
     </div>
@@ -571,12 +647,70 @@ function openFicha(id, opts = {}) {
       <input class="pago-input" id="pago-concepto-${n.id}" type="text" placeholder="Concepto">
       <button class="btn-ghost" style="padding:6px 12px;font-size:12px" onclick="addPago(${n.id})">+ Agregar</button>
     </div>
-    <div class="ficha-sec">Proceso - ${done}/${n.checklist.length} etapas completadas</div>
-    <div class="checklist" id="checklist-${id}"></div>
+
+    <div class="ficha-sec">Datos <span class="ficha-sec-hint">editá y guardá abajo</span></div>
+    <div class="form-grid ficha-form">
+      ${fichaInput(n, 'nombre', 'Nombre completo *')}
+      ${fichaInput(n, 'fecha', 'Fecha de boda', 'text', 'placeholder="15/08/2026"')}
+      ${fichaInput(n, 'tel', 'Teléfono / WhatsApp')}
+      ${fichaInput(n, 'ig', 'Instagram', 'text', 'placeholder="@usuario"')}
+      ${fichaInput(n, 'ciudad', 'Ciudad')}
+      ${fichaSelect(n, 'tipo', 'Tipo de boda', ['Iglesia y fiesta','Civil y fiesta','Civil','Fiesta','Civil, fiesta y post boda','Ceremonia judía y fiesta'])}
+      ${fichaSelect(n, 'rol', 'Rol', ['Novia','Madrina','Hermana','Madre','Invitada'])}
+      ${fichaSelect(n, 'resp', 'Responsable', ['Lucía','Marina','Equipo'], true)}
+      ${fichaSelect(n, 'trabajo', 'Trabajo', TRABAJOS, true)}
+      ${fichaSelect(n, 'estado', 'Estado', ['Pendiente','Propuesta enviada','Confirmado','Entregado','Cancelado'])}
+      ${fichaInput(n, 'total', 'Monto total ($)', 'number', 'min="0"')}
+      ${fichaInput(n, 'sena_cita', 'Seña cita ($)', 'number', 'min="0"')}
+      ${fichaInput(n, 'sena', 'Cobrado ($)', 'number', 'min="0"')}
+      ${fichaInput(n, 'fsena', 'Fecha seña', 'text', 'placeholder="dd/mm"')}
+      <div class="fg full"><label>Piezas encargadas</label><textarea id="fi-piezas" rows="3">${escapeHtml(n.piezas || '')}</textarea></div>
+      <div class="fg full"><label>Notas internas</label><textarea id="fi-notas" rows="2">${escapeHtml(n.notas || '')}</textarea></div>
+    </div>
+    <div class="ficha-form-foot">
+      <button class="btn-ghost" onclick="toggleArchivada(${n.id})" style="font-size:12px">${n.archivada ? '↩ Desarchivar' : 'Archivar'}</button>
+      <button class="btn-primary" id="btn-save-ficha" onclick="saveFicha(${n.id})">Guardar cambios</button>
+    </div>
   `;
   renderChecklist(n);
   document.getElementById('overlay-ficha').classList.add('open');
 }
+
+// Guardar los datos editados desde la ficha
+async function saveFicha(id) {
+  const n = window.AppState.novias.find(x => x.id === id);
+  if (!n) return;
+  const g = c => { const el = document.getElementById('fi-' + c); return el ? el.value : ''; };
+  const nombre = g('nombre').trim();
+  if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
+  const data = {
+    nombre,
+    fecha: g('fecha').trim(), tel: g('tel').trim(), ig: g('ig').trim(), ciudad: g('ciudad').trim(),
+    tipo: g('tipo'), rol: g('rol'), resp: g('resp'), trabajo: g('trabajo'), estado: g('estado'),
+    total: parseInt(g('total')) || 0,
+    sena_cita: parseInt(g('sena_cita')) || 0,
+    sena: parseInt(g('sena')) || 0,
+    fsena: g('fsena').trim(),
+    piezas: g('piezas').trim(), notas: g('notas').trim(),
+  };
+  const btn = document.getElementById('btn-save-ficha');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+  try {
+    const { error } = await apiUpdateNovia(id, data);
+    if (error) throw error;
+    Object.assign(n, data);
+    showToast('Cambios guardados');
+    openFicha(id);
+    renderDash(); renderNovias(); renderPagos();
+    if (typeof renderEntregadas === 'function' && document.getElementById('view-entregadas').classList.contains('active')) renderEntregadas();
+  } catch (e) {
+    console.error(e);
+    showToast(e && e.message === 'timeout' ? 'La conexión no respondió. Probá de nuevo.' : 'Error guardando: ' + ((e && e.message) || ''), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
+  }
+}
+window.saveFicha = saveFicha;
 
 function renderChecklist(n) {
   const el = document.getElementById('checklist-' + n.id);
@@ -600,13 +734,27 @@ async function toggleCheck(nid, idx) {
   n.checklist[idx].done = !wasDone;
   n.checklist[idx].fechaDone = !wasDone ? new Date().toISOString() : null;
   renderChecklist(n);
-  const { error } = await apiUpdateNovia(nid, { checklist: n.checklist });
+  const patch = { checklist: n.checklist };
+  // Entrega + pago listos -> pasa a Entregadas
+  const ahoraEntregada = checkDone(n, 'Entrega realizada') && checkDone(n, 'Pago realizado');
+  const estadoAnterior = n.estado;
+  if (ahoraEntregada && n.estado !== 'Entregado' && n.estado !== 'Cancelado') { patch.estado = 'Entregado'; n.estado = 'Entregado'; }
+  if (!ahoraEntregada && n.estado === 'Entregado') { patch.estado = 'Confirmado'; n.estado = 'Confirmado'; }
+  const { error } = await apiUpdateNovia(nid, patch);
   if (error) {
     n.checklist[idx].done = wasDone;
     n.checklist[idx].fechaDone = wasDone ? n.checklist[idx].fechaDone : null;
+    n.estado = estadoAnterior;
     renderChecklist(n);
     showToast('Error guardando cambio');
+    return;
   }
+  if (patch.estado) {
+    showToast(patch.estado === 'Entregado' ? n.nombre + ' pasó a Entregadas' : n.nombre + ' volvió a activas');
+    openFicha(nid);
+  }
+  renderDash(); renderNovias(); renderPagos();
+  if (typeof renderEntregadas === 'function' && document.getElementById('view-entregadas').classList.contains('active')) renderEntregadas();
 }
 
 async function addPago(nid) {
@@ -619,7 +767,8 @@ async function addPago(nid) {
   const n = window.AppState.novias.find(x => x.id === nid);
   const nuevoPago = { fecha: new Date().toISOString().slice(0,10), monto, concepto };
   const pagosActualizados = [...(n.pagos || []), nuevoPago];
-  const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
+  const senaAnterior = n.sena || 0;
+  const totalCobrado = senaAnterior + monto;
 
   // Actualizar localmente PRIMERO (refresco visual inmediato)
   n.pagos = pagosActualizados;
@@ -632,9 +781,11 @@ async function addPago(nid) {
   if (error) {
     showToast('Error guardando pago');
     n.pagos = (n.pagos || []).filter(p => p !== nuevoPago);
-    n.sena = (n.pagos || []).reduce((a, p) => a + p.monto, 0);
+    n.sena = senaAnterior;
     openFicha(nid);
+    return;
   }
+  renderDash(); renderPagos();
 }
 
 async function deletePago(nid, idx) {
@@ -643,7 +794,8 @@ async function deletePago(nid, idx) {
   const n = window.AppState.novias.find(x => x.id === nid);
   const pagoEliminado = n.pagos[idx];
   const pagosActualizados = (n.pagos || []).filter((_, i) => i !== idx);
-  const totalCobrado = pagosActualizados.reduce((a, p) => a + p.monto, 0);
+  const senaAnterior = n.sena || 0;
+  const totalCobrado = Math.max(0, senaAnterior - (pagoEliminado.monto || 0));
 
   // Actualizar localmente PRIMERO
   n.pagos = pagosActualizados;
@@ -656,23 +808,49 @@ async function deletePago(nid, idx) {
   if (error) {
     showToast('Error eliminando pago');
     n.pagos.splice(idx, 0, pagoEliminado);
-    n.sena = n.pagos.reduce((a, p) => a + p.monto, 0);
+    n.sena = senaAnterior;
     openFicha(nid);
+    return;
   }
+  renderDash(); renderPagos();
 }
 
-function editFromFicha() {
-  const id = window.AppState.fichaId;
-  closeModal('ficha');
-  openModal('edit', id);
+// ===== ENTREGADAS =====
+async function renderEntregadas() {
+  const tbody = document.getElementById('entregadas-tbody');
+  const sub = document.getElementById('entregadas-sub');
+  if (!tbody) return;
+  // Traemos también las archivadas: una entregada vieja puede estar archivada
+  let todas = window.AppState.novias;
+  if (!window.AppState.showArchived) {
+    try {
+      todas = await apiLoadNovias({ includeArchived: true });
+      // Sumar al estado las archivadas que no teníamos, para poder abrir su ficha
+      const ids = new Set(window.AppState.novias.map(x => x.id));
+      todas.filter(x => !ids.has(x.id)).forEach(x => window.AppState.novias.push(x));
+      todas = window.AppState.novias;
+    } catch (e) { console.error(e); }
+  }
+  const q = (document.getElementById('entregadas-search').value || '').toLowerCase();
+  const lista = todas.filter(isEntregada)
+    .filter(n => !q || (n.nombre || '').toLowerCase().includes(q) || (n.ciudad || '').toLowerCase().includes(q) || (n.piezas || '').toLowerCase().includes(q))
+    .sort((a, b) => parseDate(b.fecha) - parseDate(a.fecha));
+  if (sub) sub.textContent = `${lista.length} novias entregadas · historial`;
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Todavía no hay novias entregadas</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = '';
+  lista.forEach(n => tbody.insertAdjacentHTML('beforeend', renderRow(n, 'entregadas')));
 }
+window.renderEntregadas = renderEntregadas;
 
 // ===== EXPORT CSV =====
 function exportCSV() {
-  const noviasHeaders = ['ID','Nombre','Fecha Boda','Estado','Ciudad','Tipo','Rol','Responsable','Total','Cobrado','Saldo','Tel','IG','Piezas','Notas'];
+  const noviasHeaders = ['ID','Nombre','Fecha Boda','Estado','Trabajo','Ciudad','Tipo','Rol','Responsable','Total','Seña cita','Cobrado','Saldo','Tel','IG','Piezas','Notas'];
   const noviasRows = window.AppState.novias.map(n => [
-    n.id, n.nombre, n.fecha, n.estado, n.ciudad, n.tipo, n.rol, n.resp,
-    n.total, n.sena, n.total - n.sena, n.tel, n.ig, n.piezas,
+    n.id, n.nombre, n.fecha, n.estado, n.trabajo, n.ciudad, n.tipo, n.rol, n.resp,
+    n.total, n.sena_cita, n.sena, saldoDe(n), n.tel, n.ig, n.piezas,
     (n.notas||'').replace(/\n/g,' ')
   ].map(v => '"'+(String(v||'').replace(/"/g,'""'))+'"').join(','));
   const noviasCsv = [noviasHeaders.join(','), ...noviasRows].join('\n');

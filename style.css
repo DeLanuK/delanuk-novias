@@ -1057,3 +1057,27 @@ body.is-staff .admin-only {
 @media (max-width: 700px) {
   .foto-choice { grid-template-columns: 1fr; }
 }
+
+/* ── CAMBIOS: ficha editable, pagos editables, trabajo, entregadas ───────── */
+.pago-cards.pago-cards-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 720px) { .pago-cards.pago-cards-4 { grid-template-columns: 1fr 1fr; } }
+.ficha-sec-hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-l); font-size: 11px; margin-left: 6px; }
+.ficha-form { margin-bottom: 12px; }
+.ficha-form input, .ficha-form select, .ficha-form textarea { width: 100%; }
+.ficha-form-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0 16px; }
+.cell-input {
+    width: 100%; min-width: 80px; padding: 5px 8px;
+    border: 1px solid transparent; border-radius: 6px;
+    background: transparent; font: inherit; color: inherit; outline: none;
+    transition: border-color .15s, background .15s;
+}
+.cell-input.cell-num { text-align: right; font-variant-numeric: tabular-nums; }
+.cell-input:hover { border-color: var(--border); background: var(--surface-2); }
+.cell-input:focus { border-color: var(--rose-m); background: var(--surface); }
+.cell-input.saving { opacity: .5; }
+.cell-input::-webkit-outer-spin-button, .cell-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.chip-trabajo {
+    display: inline-block; font-size: 10px; letter-spacing: .4px; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink-m); vertical-align: middle;
+}

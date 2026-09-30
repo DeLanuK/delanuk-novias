@@ -102,6 +102,10 @@
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           Envío
         </button>
+        <button class="nav-item" data-view="entregadas">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Entregadas
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button class="btn-add-side" id="btn-add-side">
@@ -182,7 +186,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Pagos</h1>
-            <p class="page-sub">Control de cobros y saldos</p>
+            <p class="page-sub">Control de cobros y saldos · tocá un casillero para editarlo</p>
           </div>
         </div>
         <div class="kpi-row admin-only" id="kpi-pagos"></div>
@@ -194,7 +198,7 @@
         <div class="table-wrap" style="margin-top:20px">
           <table>
             <thead><tr>
-              <th>Novia</th><th>Total</th><th>Seña</th><th>F. seña</th><th>Saldo</th><th>Estado</th>
+              <th>Novia</th><th>Total</th><th>Seña cita</th><th>Cobrado</th><th>F. seña</th><th>Saldo</th><th>Estado</th>
             </tr></thead>
             <tbody id="pagos-tbody"></tbody>
           </table>
@@ -235,6 +239,29 @@
           </table>
         </div>
       </section>
+
+      <section class="view" id="view-entregadas">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Entregadas</h1>
+            <p class="page-sub" id="entregadas-sub">Historial de novias entregadas y cobradas</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="entregadas-search" placeholder="Buscar por nombre, ciudad, pieza..." oninput="renderEntregadas()">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Novia</th><th>Boda</th><th>Ciudad</th><th>Piezas</th><th>Entregada</th><th>Total</th><th></th>
+            </tr></thead>
+            <tbody id="entregadas-tbody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <nav class="mobile-nav">
@@ -253,6 +280,10 @@
       <button class="nav-item" data-view="envio">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Envío</span>
+      </button>
+      <button class="nav-item" data-view="entregadas">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Entregadas</span>
       </button>
     </nav>
   </div>
@@ -280,6 +311,9 @@
           <div class="fg"><label>Responsable</label>
             <select id="f-resp"><option value="">— Sin asignar —</option><option>Lucía</option><option>Marina</option><option>Equipo</option></select>
           </div>
+          <div class="fg"><label>Trabajo</label>
+            <select id="f-trabajo"><option value="">— Sin definir —</option><option>Orfebrería</option><option>Ensamble</option><option>Ambas</option></select>
+          </div>
         </div>
         <div class="form-section-label" style="margin-top:18px">Estado y piezas</div>
         <div class="form-grid">
@@ -287,6 +321,7 @@
             <select id="f-estado"><option>Pendiente</option><option>Propuesta enviada</option><option>Confirmado</option><option>Entregado</option><option>Cancelado</option></select>
           </div>
           <div class="fg"><label>Monto total ($)</label><input id="f-total" type="number" placeholder="0"></div>
+          <div class="fg"><label>Seña cita ($)</label><input id="f-sena-cita" type="number" placeholder="0"></div>
           <div class="fg"><label>Seña abonada ($)</label><input id="f-sena" type="number" placeholder="0"></div>
           <div class="fg"><label>Fecha seña</label><input id="f-fsena" type="text" placeholder="dd/mm"></div>
           <div class="fg full"><label>Piezas encargadas</label><textarea id="f-piezas" rows="3" placeholder="Aros Mistral plata + tocado con perlas..."></textarea></div>
@@ -308,10 +343,8 @@
       </div>
       <div id="ficha-body" class="ficha-body"></div>
       <div class="modal-foot">
-        <button class="btn-ghost" onclick="toggleArchivada(window.AppState.fichaId)" style="font-size:12px">Archivar</button>
         <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
         <button class="btn-primary" type="button" onclick="window.open('delanuk_presupuesto/presupuesto.html?novia=' + window.AppState.fichaId + '&print=1', '_blank')">Generar presupuesto</button>
-        <button class="btn-primary" onclick="editFromFicha()">Editar</button>
         <button class="btn-danger" onclick="deleteNovia(window.AppState.fichaId)" style="font-size:11px;padding:4px 10px;opacity:.7" title="Eliminar permanentemente">Eliminar</button>
       </div>
     </div>

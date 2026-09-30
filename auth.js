@@ -82,6 +82,7 @@ async function loadNovias() {
     renderDash();
     if (document.getElementById('view-novias').classList.contains('active')) renderNovias();
     if (document.getElementById('view-pagos').classList.contains('active')) renderPagos();
+    if (document.getElementById('view-entregadas').classList.contains('active')) renderEntregadas();
     resolveHashRoute();
   } catch (e) {
     console.error('Error cargando novias:', e);
