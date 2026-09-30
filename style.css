@@ -1081,3 +1081,21 @@ body.is-staff .admin-only {
     padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border);
     background: var(--surface-2); color: var(--ink-m); vertical-align: middle;
 }
+.pc-input {
+    width: 100%; text-align: center; border: 1px solid transparent; border-radius: 6px;
+    background: transparent; outline: none; padding: 2px 4px;
+    font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--ink);
+}
+.pc-input.green { color: var(--green); } .pc-input.rose { color: var(--rose); }
+.pc-input:hover { border-color: var(--border); background: var(--surface); }
+.pc-input:focus { border-color: var(--rose-m); background: var(--surface); }
+.pc-input::-webkit-outer-spin-button, .pc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pc-check { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-m); margin-top: 4px; cursor: pointer; text-transform: none; }
+.pc-check input { margin: 0; accent-color: var(--green); }
+.cell-cita { display: flex; flex-direction: column; align-items: flex-end; }
+.calc-row {
+    display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--ink-m);
+    background: var(--surface-2); border: 1px dashed var(--border); border-radius: var(--radius);
+    padding: 8px 12px; margin: 0 0 10px;
+}
+.calc-row b { color: var(--ink); font-weight: 600; }

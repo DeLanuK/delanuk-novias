@@ -45,12 +45,20 @@ function normalizeChecklist(list) {
 function checkDone(n, label) {
   return !!(n.checklist || []).find(c => c.label === label && c.done);
 }
-// Saldo real: presupuesto - cobrado (pagos) - seña de la cita
+// Seña de la cita: solo cuenta cuando está marcada como pagada
+function citaPagada(n) {
+  return n.sena_cita_pagada ? (n.sena_cita || 0) : 0;
+}
+// Saldo real: presupuesto - cobrado (pagos) - seña de la cita pagada
 function saldoDe(n) {
-  return (n.total || 0) - (n.sena || 0) - (n.sena_cita || 0);
+  return (n.total || 0) - (n.sena || 0) - citaPagada(n);
 }
 function cobradoDe(n) {
-  return (n.sena || 0) + (n.sena_cita || 0);
+  return (n.sena || 0) + citaPagada(n);
+}
+// Seña sugerida: 50 % del presupuesto
+function senaSugerida(n) {
+  return Math.round((n.total || 0) / 2);
 }
 // Entregada = entrega realizada y pago realizado (o estado Entregado)
 function isEntregada(n) {
@@ -91,6 +99,7 @@ async function apiLoadNovias({ includeArchived = false } = {}) {
     checklist: normalizeChecklist(n.checklist),
     pagos: Array.isArray(n.pagos) ? n.pagos : [],
     sena_cita: Number(n.sena_cita) || 0,
+    sena_cita_pagada: !!n.sena_cita_pagada,
     trabajo: n.trabajo || '',
   }));
 }

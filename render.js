@@ -166,7 +166,7 @@ function waMessage(n) {
   ];
   if (n.total > 0) {
     lineas.push(`• Presupuesto: $${fmt(n.total)}`);
-    if (n.sena_cita > 0) lineas.push(`• Seña de la cita: $${fmt(n.sena_cita)}`);
+    if (n.sena_cita_pagada && n.sena_cita > 0) lineas.push(`• Seña de la cita: $${fmt(n.sena_cita)}`);
     lineas.push(`• Cobrado: $${fmt(n.sena || 0)}`);
     lineas.push(`• Saldo pendiente: $${fmt(saldo)}`);
   }
@@ -370,7 +370,7 @@ async function savePagoCell(nid, campo, input) {
   const n = window.AppState.novias.find(x => x.id === nid);
   if (!n) return;
   const numeric = ['total', 'sena', 'sena_cita'].includes(campo);
-  const nuevo = numeric ? (parseInt(input.value) || 0) : input.value.trim();
+  const nuevo = input.type === 'checkbox' ? !!input.checked : numeric ? (parseInt(input.value) || 0) : input.value.trim();
   const anterior = n[campo];
   if (nuevo === anterior) return;
   n[campo] = nuevo;
@@ -385,6 +385,7 @@ async function savePagoCell(nid, campo, input) {
   }
   renderPagos();
   renderDash();
+  if (window.AppState.fichaId === nid && document.getElementById('overlay-ficha').classList.contains('open')) openFicha(nid, { fromHash: true });
 }
 window.savePagoCell = savePagoCell;
 
@@ -420,7 +421,7 @@ function renderPagos() {
       <tr>
         <td><span class="td-name">${escapeHtml(n.nombre)}</span><br><span class="td-muted">${escapeHtml(n.fecha) || '-'}</span></td>
         <td class="amount">${pagoCell(n, 'total', 'num')}</td>
-        <td class="amount">${pagoCell(n, 'sena_cita', 'num')}</td>
+        <td class="amount"><div class="cell-cita">${pagoCell(n, 'sena_cita', 'num')}<label class="pc-check" title="Seña de la cita pagada"><input type="checkbox" ${n.sena_cita_pagada ? 'checked' : ''} onchange="savePagoCell(${n.id}, 'sena_cita_pagada', this)"> pagada</label></div></td>
         <td class="amount paid">${pagoCell(n, 'sena', 'num')}</td>
         <td class="td-muted">${pagoCell(n, 'fsena', 'text')}</td>
         <td class="amount ${saldo > 0 ? 'due' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</td>
@@ -630,13 +631,23 @@ function openFicha(id, opts = {}) {
     <div class="ficha-sec">Proceso - ${done}/${n.checklist.length} etapas completadas${entregada ? ' · <span class="badge b-entr">Entregada</span>' : ''}</div>
     <div class="checklist" id="checklist-${id}"></div>
 
-    <div class="ficha-sec">Pagos</div>
+    <div class="ficha-sec">Pagos <span class="ficha-sec-hint">tocá un número para editarlo</span></div>
     <div class="pago-cards pago-cards-4">
-      <div class="pago-card"><div class="pc-label">Presupuesto</div><div class="pc-val rose">${n.total > 0 ? '$' + fmt(n.total) : '-'}</div></div>
-      <div class="pago-card"><div class="pc-label">Seña cita</div><div class="pc-val">${n.sena_cita > 0 ? '$' + fmt(n.sena_cita) : '-'}</div></div>
-      <div class="pago-card"><div class="pc-label">Cobrado</div><div class="pc-val green">${n.sena > 0 ? '$' + fmt(n.sena) : '-'}</div></div>
+      <div class="pago-card"><div class="pc-label">Presupuesto</div><input class="pc-input rose" type="number" min="0" inputmode="numeric" placeholder="0" value="${n.total || ''}" onchange="savePagoCell(${n.id}, 'total', this)"></div>
+      <div class="pago-card">
+        <div class="pc-label">Seña cita</div>
+        <input class="pc-input" type="number" min="0" inputmode="numeric" placeholder="0" value="${n.sena_cita || ''}" onchange="savePagoCell(${n.id}, 'sena_cita', this)">
+        <label class="pc-check"><input type="checkbox" ${n.sena_cita_pagada ? 'checked' : ''} onchange="savePagoCell(${n.id}, 'sena_cita_pagada', this)"> Pagada</label>
+      </div>
+      <div class="pago-card"><div class="pc-label">Cobrado</div><input class="pc-input green" type="number" min="0" inputmode="numeric" placeholder="0" value="${n.sena || ''}" onchange="savePagoCell(${n.id}, 'sena', this)"></div>
       <div class="pago-card"><div class="pc-label">Saldo</div><div class="pc-val ${saldo > 0 ? 'red' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</div></div>
     </div>
+    ${n.total > 0 ? `<div class="calc-row">
+      <span>Seña 50 %: <b>$${fmt(senaSugerida(n))}</b></span>
+      <span>Resta después de la seña: <b>$${fmt((n.total || 0) - senaSugerida(n))}</b></span>
+      ${n.sena_cita > 0 ? `<span>Seña cita ${n.sena_cita_pagada ? 'pagada' : 'sin pagar'}: <b>${n.sena_cita_pagada ? '−' : ''}$${fmt(n.sena_cita)}</b></span>` : ''}
+      <span>Saldo final: <b>$${fmt((n.total || 0) - senaSugerida(n) - citaPagada(n))}</b></span>
+    </div>` : ''}
     ${(n.pagos && n.pagos.length > 0)
       ? '<div class="pagos-lista">' + n.pagos.map((p, i) =>
           '<div class="pago-item"><span class="pago-fecha">' + p.fecha + '</span><span class="pago-concepto">' + escapeHtml(p.concepto) + '</span><span class="pago-monto">$' + fmt(p.monto) + '</span><button class="pago-del" onclick="deletePago(' + n.id + ',' + i + ')">×</button></div>'
@@ -660,9 +671,6 @@ function openFicha(id, opts = {}) {
       ${fichaSelect(n, 'resp', 'Responsable', ['Lucía','Marina','Equipo'], true)}
       ${fichaSelect(n, 'trabajo', 'Trabajo', TRABAJOS, true)}
       ${fichaSelect(n, 'estado', 'Estado', ['Pendiente','Propuesta enviada','Confirmado','Entregado','Cancelado'])}
-      ${fichaInput(n, 'total', 'Monto total ($)', 'number', 'min="0"')}
-      ${fichaInput(n, 'sena_cita', 'Seña cita ($)', 'number', 'min="0"')}
-      ${fichaInput(n, 'sena', 'Cobrado ($)', 'number', 'min="0"')}
       ${fichaInput(n, 'fsena', 'Fecha seña', 'text', 'placeholder="dd/mm"')}
       <div class="fg full"><label>Piezas encargadas</label><textarea id="fi-piezas" rows="3">${escapeHtml(n.piezas || '')}</textarea></div>
       <div class="fg full"><label>Notas internas</label><textarea id="fi-notas" rows="2">${escapeHtml(n.notas || '')}</textarea></div>
@@ -687,9 +695,6 @@ async function saveFicha(id) {
     nombre,
     fecha: g('fecha').trim(), tel: g('tel').trim(), ig: g('ig').trim(), ciudad: g('ciudad').trim(),
     tipo: g('tipo'), rol: g('rol'), resp: g('resp'), trabajo: g('trabajo'), estado: g('estado'),
-    total: parseInt(g('total')) || 0,
-    sena_cita: parseInt(g('sena_cita')) || 0,
-    sena: parseInt(g('sena')) || 0,
     fsena: g('fsena').trim(),
     piezas: g('piezas').trim(), notas: g('notas').trim(),
   };
@@ -847,10 +852,10 @@ window.renderEntregadas = renderEntregadas;
 
 // ===== EXPORT CSV =====
 function exportCSV() {
-  const noviasHeaders = ['ID','Nombre','Fecha Boda','Estado','Trabajo','Ciudad','Tipo','Rol','Responsable','Total','Seña cita','Cobrado','Saldo','Tel','IG','Piezas','Notas'];
+  const noviasHeaders = ['ID','Nombre','Fecha Boda','Estado','Trabajo','Ciudad','Tipo','Rol','Responsable','Total','Seña cita','Cita pagada','Cobrado','Saldo','Tel','IG','Piezas','Notas'];
   const noviasRows = window.AppState.novias.map(n => [
     n.id, n.nombre, n.fecha, n.estado, n.trabajo, n.ciudad, n.tipo, n.rol, n.resp,
-    n.total, n.sena_cita, n.sena, saldoDe(n), n.tel, n.ig, n.piezas,
+    n.total, n.sena_cita, n.sena_cita_pagada ? 'Sí' : 'No', n.sena, saldoDe(n), n.tel, n.ig, n.piezas,
     (n.notas||'').replace(/\n/g,' ')
   ].map(v => '"'+(String(v||'').replace(/"/g,'""'))+'"').join(','));
   const noviasCsv = [noviasHeaders.join(','), ...noviasRows].join('\n');
