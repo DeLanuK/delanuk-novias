@@ -450,7 +450,26 @@
       for (var i = 0; i < wrappers.length; i++) {
         var page = wrappers[i].querySelector('.page');
         page.style.backgroundColor = '#F4F3ED'; page.style.boxShadow = 'none';
-        var canvas = await html2canvas(page, { scale: 1, useCORS: true, backgroundColor: '#F4F3ED', scrollX: 0, scrollY: 0, windowWidth: Math.max(1100, document.documentElement.scrollWidth), windowHeight: Math.max(1400, document.documentElement.scrollHeight) });
+        /* html2canvas no soporta object-fit: cover -> reemplazar cada foto por un div con background-size: cover */
+        var swaps = [];
+        Array.prototype.forEach.call(page.querySelectorAll('img.img'), function(img) {
+          var div = document.createElement('div');
+          div.className = img.className;
+          div.setAttribute('style', img.getAttribute('style') || '');
+          div.style.backgroundImage = 'url("' + img.src + '")';
+          div.style.backgroundSize = 'cover';
+          div.style.backgroundPosition = 'center';
+          div.style.backgroundRepeat = 'no-repeat';
+          img.parentNode.insertBefore(div, img);
+          img.style.display = 'none';
+          swaps.push({ img: img, div: div });
+        });
+        var canvas;
+        try {
+          canvas = await html2canvas(page, { scale: 1, useCORS: true, backgroundColor: '#F4F3ED', scrollX: 0, scrollY: 0, windowWidth: Math.max(1100, document.documentElement.scrollWidth), windowHeight: Math.max(1400, document.documentElement.scrollHeight) });
+        } finally {
+          swaps.forEach(function(sw) { sw.div.remove(); sw.img.style.display = ''; });
+        }
         var img = canvas.toDataURL('image/jpeg', 0.9);
         if (i > 0) pdf.addPage([1080, 1350], 'portrait');
         pdf.addImage(img, 'JPEG', 0, 0, 1080, 1350);
