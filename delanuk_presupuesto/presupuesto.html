@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presupuesto DeLanuK</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
@@ -225,7 +227,7 @@
   <button class="btn-add" onclick="addPiece()">+ Agregar otra pieza</button>
   <div class="total-line" id="totalLine">Total: $0</div>
   <button class="btn-print btn-save" id="btnSave" onclick="guardarEnFicha()" style="display:none">Guardar en la ficha</button>
-  <button class="btn-print btn-wa" id="btnWa" onclick="enviarWhatsApp()" style="display:none">Enviar por WhatsApp</button>
+  <button class="btn-print btn-wa" id="btnWa" onclick="enviarWhatsApp()" style="display:none">Enviar PDF por WhatsApp</button>
   <button class="btn-print" onclick="window.print()">Descargar PDF</button>
   <p class="hint" id="saveHint">Se abre el diálogo de impresión — elegí "Guardar como PDF" como destino.</p>
 </div>
@@ -435,16 +437,73 @@
     lineas.push('', 'Cualquier consulta quedo a disposición 💌');
     return lineas.join('\n');
   }
+  /* Genera el PDF con las páginas tal cual se ven (html2canvas + jsPDF) */
+  async function generarPDF() {
+    var wrappers = Array.prototype.slice.call(document.querySelectorAll('.page-wrapper'));
+    var prev = wrappers.map(function(w) { return { t: w.style.transform, h: w.style.height }; });
+    wrappers.forEach(function(w) { w.style.transform = 'none'; w.style.height = '1350px'; });
+    var scrollPrev = window.scrollY;
+    window.scrollTo(0, 0);
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      var pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'px', format: [1080, 1350], hotfixes: ['px_scaling'] });
+      for (var i = 0; i < wrappers.length; i++) {
+        var page = wrappers[i].querySelector('.page');
+        page.style.backgroundColor = '#F4F3ED'; page.style.boxShadow = 'none';
+        var canvas = await html2canvas(page, { scale: 1, useCORS: true, backgroundColor: '#F4F3ED', scrollX: 0, scrollY: 0, windowWidth: Math.max(1100, document.documentElement.scrollWidth), windowHeight: Math.max(1400, document.documentElement.scrollHeight) });
+        var img = canvas.toDataURL('image/jpeg', 0.9);
+        if (i > 0) pdf.addPage([1080, 1350], 'portrait');
+        pdf.addImage(img, 'JPEG', 0, 0, 1080, 1350);
+      }
+      return pdf;
+    } finally {
+      wrappers.forEach(function(w, i) { w.style.transform = prev[i].t; w.style.height = prev[i].h; var pg = w.querySelector('.page'); if (pg) { pg.style.backgroundColor = ''; pg.style.boxShadow = ''; } });
+      window.scrollTo(0, scrollPrev);
+    }
+  }
+  function nombreArchivo() {
+    var n = (document.getElementById('brideName').value || 'novia').trim().replace(/[^\wáéíóúñÁÉÍÓÚÑ ]+/g, '').replace(/\s+/g, '-');
+    return 'Presupuesto-DELANUK-' + n + '.pdf';
+  }
+
   async function enviarWhatsApp() {
     var link = waLink(NOVIA_TEL);
     if (!link) { alert('La novia no tiene teléfono cargado en la ficha.'); return; }
     var items = leerItems();
     if (!items.length) { alert('Cargá al menos una pieza con precio.'); return; }
-    var url = link + '?text=' + encodeURIComponent(mensajePresupuesto(document.getElementById('brideName').value, items));
-    var win = window.open(url, '_blank');
+    var btn = document.getElementById('btnWa');
+    btn.disabled = true; btn.textContent = 'Armando PDF...';
     /* Guardar también en la ficha, así el presupuesto enviado queda registrado */
     if (NOVIA_ID) guardarEnFicha();
-    if (!win) location.href = url;
+    var texto = mensajePresupuesto(document.getElementById('brideName').value, items);
+    var urlChat = link + '?text=' + encodeURIComponent(texto);
+    try {
+      var pdf = await generarPDF();
+      var blob = pdf.output('blob');
+      var file = new File([blob], nombreArchivo(), { type: 'application/pdf' });
+      /* Celular: menú de compartir con el PDF adjunto -> elegir WhatsApp y el chat */
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Presupuesto DELANUK', text: texto });
+          btn.textContent = 'Enviado ✓';
+          setTimeout(function() { btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp'; }, 2500);
+          return;
+        } catch (e) { if (e && e.name === 'AbortError') { btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp'; return; } }
+      }
+      /* Computadora: descarga el PDF y abre el chat con el mensaje; el PDF se arrastra al chat */
+      pdf.save(nombreArchivo());
+      var win = window.open(urlChat, '_blank');
+      if (!win) location.href = urlChat;
+      btn.textContent = 'PDF descargado · adjuntalo en el chat';
+      setTimeout(function() { btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp'; }, 4000);
+    } catch (e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = 'Enviar PDF por WhatsApp';
+      /* Si el PDF falla, al menos mandar el mensaje */
+      var w2 = window.open(urlChat, '_blank');
+      if (!w2) location.href = urlChat;
+      alert('No se pudo armar el PDF automáticamente; se abrió el chat con el mensaje. Usá "Descargar PDF" para adjuntarlo.');
+    }
   }
   function cargarEnFormulario(novia) {
     NOVIA_ID = novia.id;
