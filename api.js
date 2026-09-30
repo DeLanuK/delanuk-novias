@@ -101,6 +101,7 @@ async function apiLoadNovias({ includeArchived = false } = {}) {
     sena_cita: Number(n.sena_cita) || 0,
     sena_cita_pagada: !!n.sena_cita_pagada,
     trabajo: n.trabajo || '',
+    presupuesto: Array.isArray(n.presupuesto) ? n.presupuesto : [],
   }));
 }
 async function apiInsertNovia(data)     { return sbCall(() => sb.from('novias').insert(data).select().single()); }

@@ -1099,3 +1099,5 @@ body.is-staff .admin-only {
     padding: 8px 12px; margin: 0 0 10px;
 }
 .calc-row b { color: var(--ink); font-weight: 600; }
+.presu-lista { margin: 0 0 10px; display: flex; flex-direction: column; gap: 4px; }
+.presu-foot { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-l); text-transform: uppercase; letter-spacing: .4px; padding: 4px 2px 0; }

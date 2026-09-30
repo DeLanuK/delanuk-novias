@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="De LanuK">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -344,7 +344,7 @@
       <div id="ficha-body" class="ficha-body"></div>
       <div class="modal-foot">
         <button class="btn-ghost" onclick="closeModal('ficha')">Cerrar</button>
-        <button class="btn-primary" type="button" onclick="window.open('delanuk_presupuesto/presupuesto.html?novia=' + window.AppState.fichaId + '&print=1', '_blank')">Generar presupuesto</button>
+        <button class="btn-primary" type="button" onclick="window.open('delanuk_presupuesto/presupuesto.html?novia=' + window.AppState.fichaId, '_blank')">Generar presupuesto</button>
         <button class="btn-danger" onclick="deleteNovia(window.AppState.fichaId)" style="font-size:11px;padding:4px 10px;opacity:.7" title="Eliminar permanentemente">Eliminar</button>
       </div>
     </div>
@@ -421,11 +421,11 @@
 
 
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=12"></script>
-<script src="api.js?v=12"></script>
-<script src="render.js?v=12"></script>
-<script src="auth.js?v=12"></script>
-<script src="app.js?v=12"></script>
+  <script src="config.js?v=13"></script>
+<script src="api.js?v=13"></script>
+<script src="render.js?v=13"></script>
+<script src="auth.js?v=13"></script>
+<script src="app.js?v=13"></script>
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>

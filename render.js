@@ -642,6 +642,9 @@ function openFicha(id, opts = {}) {
       <div class="pago-card"><div class="pc-label">Cobrado</div><input class="pc-input green" type="number" min="0" inputmode="numeric" placeholder="0" value="${n.sena || ''}" onchange="savePagoCell(${n.id}, 'sena', this)"></div>
       <div class="pago-card"><div class="pc-label">Saldo</div><div class="pc-val ${saldo > 0 ? 'red' : ''}">${n.total > 0 ? '$' + fmt(saldo) : '-'}</div></div>
     </div>
+    ${(n.presupuesto && n.presupuesto.length) ? '<div class="presu-lista">' + n.presupuesto.map(it =>
+        '<div class="pago-item"><span class="pago-concepto">' + escapeHtml(it.desc) + '</span><span class="pago-monto" style="color:var(--ink)">$' + fmt(it.precio) + '</span></div>').join('') +
+        '<div class="presu-foot"><span>Detalle del presupuesto</span><button class="chip chip-action" type="button" onclick="window.open(\'delanuk_presupuesto/presupuesto.html?novia=' + n.id + '\', \'_blank\')">Editar presupuesto</button></div></div>' : ''}
     ${n.total > 0 ? `<div class="calc-row">
       <span>Seña 50 %: <b>$${fmt(senaSugerida(n))}</b></span>
       <span>Resta después de la seña: <b>$${fmt((n.total || 0) - senaSugerida(n))}</b></span>

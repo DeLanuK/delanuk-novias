@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presupuesto DeLanuK</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -145,6 +150,9 @@
     margin-bottom: 14px;
     transition: border-color 0.15s;
   }
+  .total-line { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink); margin: 10px 0 4px; text-align: right; }
+  .btn-save { background: #3f6b52 !important; margin-bottom: 8px; }
+  .btn-save:disabled { opacity: .6; }
   .toolbar input:focus {
     outline: none;
     border-color: var(--accent);
@@ -214,8 +222,10 @@
     </div>
   </div>
   <button class="btn-add" onclick="addPiece()">+ Agregar otra pieza</button>
+  <div class="total-line" id="totalLine">Total: $0</div>
+  <button class="btn-print btn-save" id="btnSave" onclick="guardarEnFicha()" style="display:none">Guardar en la ficha</button>
   <button class="btn-print" onclick="window.print()">Descargar PDF</button>
-  <p class="hint">Se abre el diálogo de impresión — elegí "Guardar como PDF" como destino.</p>
+  <p class="hint" id="saveHint">Se abre el diálogo de impresión — elegí "Guardar como PDF" como destino.</p>
 </div>
 
 <!-- ══════════════ PÁGINA 1 — PORTADA ══════════════ -->
@@ -339,11 +349,16 @@
   /* ── Supabase config ── */
   var SUPABASE_URL = 'https://pecldmaxcqrgjmljpqmx.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlY2xkbWF4Y3FyZ2ptbGpwcW14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDA5NzMsImV4cCI6MjA5MTkxNjk3M30.XxfcuwI2TGXxB7KT-4q_IHGkGCUX5qeN2S8NjxtJrtU';
+  /* OJO: "var supabase" pisa la librería global window.supabase; la guardamos antes */
+  var SB_LIB = window.supabase;
   var supabase = null;
 
   function initSupabase() {
-    if (window.supabase && window.supabase.createClient) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (SB_LIB && SB_LIB.createClient) {
+      supabase = SB_LIB.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-pecldmaxcqrgjmljpqmx-auth-token',
+                lock: async function(name, t, fn) { return await fn(); } }
+      });
       return true;
     }
     return false;
@@ -353,8 +368,17 @@
   async function fetchNovia(noviaId) {
     if (!supabase) return null;
     try {
-      var res = await supabase.from('novias').select('nombre').eq('id', noviaId).single();
+      var res = await supabase.from('novias').select('id, nombre, piezas, total, presupuesto').eq('id', noviaId).single();
       if (res.error || !res.data) return null;
+
+      /* Presupuesto guardado desde esta misma página */
+      var guardado = Array.isArray(res.data.presupuesto) ? res.data.presupuesto : [];
+      if (guardado.length) {
+        return {
+          id: res.data.id, nombre: res.data.nombre, editable: true,
+          piezas: guardado.map(function(it) { return { nombre: it.desc, variantes: [{ desc: it.desc, precio: parseInt(it.precio) || 0 }], total: parseInt(it.precio) || 0 }; })
+        };
+      }
 
       var piezasRes = await supabase.from('v_presupuesto')
         .select('pieza, variante, precio, pieza_orden, variante_orden')
@@ -362,7 +386,10 @@
         .order('pieza_orden')
         .order('variante_orden');
 
-      if (piezasRes.error) return null;
+      if (piezasRes.error || !(piezasRes.data || []).length) {
+        /* Sin detalle todavía: modo edición con el nombre precargado */
+        return { id: res.data.id, nombre: res.data.nombre, editable: true, piezas: [], sugerencia: res.data.piezas || '' };
+      }
 
       /* Group variants under each pieza */
       var piezasMap = {};
@@ -389,7 +416,64 @@
   }
 
   /* ── Render from Supabase data ── */
+  var NOVIA_ID = null;
+  function cargarEnFormulario(novia) {
+    NOVIA_ID = novia.id;
+    document.getElementById('brideName').value = novia.nombre || '';
+    var list = document.getElementById('piecesList');
+    list.innerHTML = '';
+    var items = [];
+    novia.piezas.forEach(function(p) { p.variantes.forEach(function(v) { items.push({ desc: v.desc, precio: v.precio }); }); });
+    if (!items.length) items.push({ desc: novia.sugerencia || '', precio: '' });
+    items.forEach(function(it) {
+      var row = document.createElement('div');
+      row.className = 'piece-row';
+      row.innerHTML =
+        '<input type="text" placeholder="Descripción de la pieza" oninput="updatePreview()">' +
+        '<input type="number" placeholder="0" oninput="updatePreview()">' +
+        '<button class="btn-remove" onclick="removePiece(this)" title="Quitar">×</button>';
+      row.querySelectorAll('input')[0].value = it.desc || '';
+      row.querySelectorAll('input')[1].value = it.precio || '';
+      list.appendChild(row);
+    });
+    document.getElementById('btnSave').style.display = '';
+    document.getElementById('saveHint').textContent = 'Guardar en la ficha carga el total como Presupuesto de ' + (novia.nombre || 'la novia') + ' y guarda el detalle. Descargar PDF abre el diálogo de impresión.';
+    updatePreview();
+  }
+
+  function leerItems() {
+    var items = [];
+    document.querySelectorAll('.piece-row').forEach(function(row) {
+      var inputs = row.querySelectorAll('input');
+      var desc = inputs[0].value.trim();
+      var precio = parseInt(inputs[1].value) || 0;
+      if (desc || precio) items.push({ desc: desc, precio: precio });
+    });
+    return items;
+  }
+
+  async function guardarEnFicha() {
+    if (!NOVIA_ID || !supabase) return;
+    var items = leerItems();
+    var total = items.reduce(function(a, it) { return a + it.precio; }, 0);
+    var btn = document.getElementById('btnSave');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      var sess = await supabase.auth.getSession();
+      if (!sess.data || !sess.data.session) throw new Error('Iniciá sesión en la app y volvé a abrir el presupuesto desde la ficha.');
+      var res = await supabase.from('novias').update({ presupuesto: items, total: total }).eq('id', NOVIA_ID);
+      if (res.error) throw res.error;
+      btn.textContent = 'Guardado ✓ · Total $' + fmt(total);
+      setTimeout(function() { btn.disabled = false; btn.textContent = 'Guardar en la ficha'; }, 2500);
+    } catch (e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = 'Guardar en la ficha';
+      alert('No se pudo guardar: ' + (e.message || e));
+    }
+  }
+
   function renderFromSupabase(novia) {
+    if (novia.editable) { cargarEnFormulario(novia); return; }
     /* Hide manual toolbar */
     var toolbar = document.getElementById('toolbar');
     if (toolbar) toolbar.style.display = 'none';
@@ -489,6 +573,9 @@
       display.appendChild(spacer);
     });
 
+    var tl = document.getElementById('totalLine');
+    if (tl) tl.textContent = 'Total: $' + fmt(total);
+
     if (rows.length > 1 && total > 0) {
       var pTotal = document.createElement('p');
       pTotal.style.cssText = 'font-style:italic; font-weight:700; padding-top:14px; border-top:1px solid #8B7355;';
@@ -510,7 +597,7 @@
       var novia = await fetchNovia(noviaId);
       if (novia) {
         renderFromSupabase(novia);
-        if (autoPrint) setTimeout(function() { window.print(); }, 600);
+        if (autoPrint && !novia.editable) setTimeout(function() { window.print(); }, 600);
         return;
       }
       console.warn('No se pudo cargar la novia #' + noviaId + ', modo manual activado.');
