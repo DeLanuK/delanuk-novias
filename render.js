@@ -173,6 +173,22 @@ function waMessage(n) {
   lineas.push('', 'Cualquier consulta quedo a disposición 💌');
   return lineas.join('\n');
 }
+// Mensaje de presupuesto (detalle + total + seña 50 %)
+function presupuestoMessage(n) {
+  const items = n.presupuesto || [];
+  const total = items.reduce((a, it) => a + (parseInt(it.precio) || 0), 0) || (n.total || 0);
+  const nombre = (n.nombre || '').split(' ')[0];
+  const lineas = [`Hola ${nombre}! Te paso el presupuesto de DELANUK ✨`, ''];
+  items.forEach(it => lineas.push(`• ${it.desc}: $${fmt(it.precio)}`));
+  lineas.push('', `Total: $${fmt(total)}`);
+  lineas.push(`Para confirmar se abona el 50 % de seña: $${fmt(Math.round(total / 2))}`);
+  lineas.push('', 'Cualquier consulta quedo a disposición 💌');
+  return lineas.join('\n');
+}
+function presupuestoWaUrl(n) {
+  const base = waLink(n.tel);
+  return base ? base + '?text=' + encodeURIComponent(presupuestoMessage(n)) : null;
+}
 function waLinkWithMessage(n) {
   const base = waLink(n.tel);
   if (!base) return null;
@@ -644,7 +660,7 @@ function openFicha(id, opts = {}) {
     </div>
     ${(n.presupuesto && n.presupuesto.length) ? '<div class="presu-lista">' + n.presupuesto.map(it =>
         '<div class="pago-item"><span class="pago-concepto">' + escapeHtml(it.desc) + '</span><span class="pago-monto" style="color:var(--ink)">$' + fmt(it.precio) + '</span></div>').join('') +
-        '<div class="presu-foot"><span>Detalle del presupuesto</span><button class="chip chip-action" type="button" onclick="window.open(\'delanuk_presupuesto/presupuesto.html?novia=' + n.id + '\', \'_blank\')">Editar presupuesto</button></div></div>' : ''}
+        '<div class="presu-foot"><span>Detalle del presupuesto</span><span>' + (wa ? '<a class="chip chip-link" href="' + presupuestoWaUrl(n) + '" target="_blank" rel="noopener">Enviar por WhatsApp</a> ' : '') + '<button class="chip chip-action" type="button" onclick="window.open(\'delanuk_presupuesto/presupuesto.html?novia=' + n.id + '\', \'_blank\')">Editar presupuesto</button></span></div></div>' : ''}
     ${n.total > 0 ? `<div class="calc-row">
       <span>Seña 50 %: <b>$${fmt(senaSugerida(n))}</b></span>
       <span>Resta después de la seña: <b>$${fmt((n.total || 0) - senaSugerida(n))}</b></span>

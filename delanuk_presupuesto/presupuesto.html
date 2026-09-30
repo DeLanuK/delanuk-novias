@@ -153,6 +153,7 @@
   .total-line { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink); margin: 10px 0 4px; text-align: right; }
   .btn-save { background: #3f6b52 !important; margin-bottom: 8px; }
   .btn-save:disabled { opacity: .6; }
+  .btn-wa { background: #25806a !important; margin-bottom: 8px; }
   .toolbar input:focus {
     outline: none;
     border-color: var(--accent);
@@ -224,6 +225,7 @@
   <button class="btn-add" onclick="addPiece()">+ Agregar otra pieza</button>
   <div class="total-line" id="totalLine">Total: $0</div>
   <button class="btn-print btn-save" id="btnSave" onclick="guardarEnFicha()" style="display:none">Guardar en la ficha</button>
+  <button class="btn-print btn-wa" id="btnWa" onclick="enviarWhatsApp()" style="display:none">Enviar por WhatsApp</button>
   <button class="btn-print" onclick="window.print()">Descargar PDF</button>
   <p class="hint" id="saveHint">Se abre el diálogo de impresión — elegí "Guardar como PDF" como destino.</p>
 </div>
@@ -368,14 +370,14 @@
   async function fetchNovia(noviaId) {
     if (!supabase) return null;
     try {
-      var res = await supabase.from('novias').select('id, nombre, piezas, total, presupuesto').eq('id', noviaId).single();
+      var res = await supabase.from('novias').select('id, nombre, tel, piezas, total, presupuesto').eq('id', noviaId).single();
       if (res.error || !res.data) return null;
 
       /* Presupuesto guardado desde esta misma página */
       var guardado = Array.isArray(res.data.presupuesto) ? res.data.presupuesto : [];
       if (guardado.length) {
         return {
-          id: res.data.id, nombre: res.data.nombre, editable: true,
+          id: res.data.id, nombre: res.data.nombre, tel: res.data.tel, editable: true,
           piezas: guardado.map(function(it) { return { nombre: it.desc, variantes: [{ desc: it.desc, precio: parseInt(it.precio) || 0 }], total: parseInt(it.precio) || 0 }; })
         };
       }
@@ -388,7 +390,7 @@
 
       if (piezasRes.error || !(piezasRes.data || []).length) {
         /* Sin detalle todavía: modo edición con el nombre precargado */
-        return { id: res.data.id, nombre: res.data.nombre, editable: true, piezas: [], sugerencia: res.data.piezas || '' };
+        return { id: res.data.id, nombre: res.data.nombre, tel: res.data.tel, editable: true, piezas: [], sugerencia: res.data.piezas || '' };
       }
 
       /* Group variants under each pieza */
@@ -416,9 +418,38 @@
   }
 
   /* ── Render from Supabase data ── */
-  var NOVIA_ID = null;
+  var NOVIA_ID = null, NOVIA_TEL = null;
+  function waLink(tel) {
+    var digits = (tel || '').replace(/\D/g, '');
+    if (!digits) return null;
+    var full = digits.indexOf('54') === 0 ? digits : '549' + digits.replace(/^0/, '');
+    return 'https://wa.me/' + full;
+  }
+  function mensajePresupuesto(nombre, items) {
+    var total = items.reduce(function(a, it) { return a + it.precio; }, 0);
+    var primerNombre = (nombre || '').split(' ')[0];
+    var lineas = ['Hola ' + primerNombre + '! Te paso el presupuesto de DELANUK ✨', ''];
+    items.forEach(function(it) { lineas.push('• ' + it.desc + ': $' + fmt(it.precio)); });
+    lineas.push('', 'Total: $' + fmt(total));
+    lineas.push('Para confirmar se abona el 50 % de seña: $' + fmt(Math.round(total / 2)));
+    lineas.push('', 'Cualquier consulta quedo a disposición 💌');
+    return lineas.join('\n');
+  }
+  async function enviarWhatsApp() {
+    var link = waLink(NOVIA_TEL);
+    if (!link) { alert('La novia no tiene teléfono cargado en la ficha.'); return; }
+    var items = leerItems();
+    if (!items.length) { alert('Cargá al menos una pieza con precio.'); return; }
+    var url = link + '?text=' + encodeURIComponent(mensajePresupuesto(document.getElementById('brideName').value, items));
+    var win = window.open(url, '_blank');
+    /* Guardar también en la ficha, así el presupuesto enviado queda registrado */
+    if (NOVIA_ID) guardarEnFicha();
+    if (!win) location.href = url;
+  }
   function cargarEnFormulario(novia) {
     NOVIA_ID = novia.id;
+    NOVIA_TEL = novia.tel || null;
+    if (waLink(NOVIA_TEL)) document.getElementById('btnWa').style.display = '';
     document.getElementById('brideName').value = novia.nombre || '';
     var list = document.getElementById('piecesList');
     list.innerHTML = '';
