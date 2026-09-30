@@ -45,8 +45,9 @@ self.addEventListener('fetch', (event) => {
   // Solo manejar GET (leer archivos), no POST/PUT/DELETE
   if (event.request.method !== 'GET') return;
 
+  // cache: 'no-cache' obliga a revalidar contra el servidor (GitHub Pages cachea 10 min)
   event.respondWith(
-    fetch(event.request)
+    fetch(new Request(event.request, { cache: 'no-cache' }))
       .then((resp) => {
         // Si la respuesta es buena, actualizar la caché con la versión nueva
         const copia = resp.clone();
