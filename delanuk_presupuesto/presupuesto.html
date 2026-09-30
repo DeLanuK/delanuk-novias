@@ -214,7 +214,9 @@
     </div>
   </div>
   <button class="btn-add" onclick="addPiece()">+ Agregar otra pieza</button>
-  <button class="btn-print" onclick="window.print()">Descargar PDF</button>
+  <button class="btn-print" id="btnSaveFicha" style="display:none" onclick="saveToFicha()">Guardar en la ficha</button>
+  <p class="hint" id="saveStatus" style="display:none"></p>
+  <button class="btn-print" onclick="printBudget()">Descargar PDF</button>
   <p class="hint">Se abre el diálogo de impresión — elegí "Guardar como PDF" como destino.</p>
 </div>
 
@@ -425,6 +427,7 @@
       }
     });
 
+    if (grandTotal > 0) saveToFicha({ total: grandTotal, items: novia.piezas.map(function(p){ return { desc: p.nombre, precio: p.total }; }) });
     /* Grand total if multiple items */
     if (novia.piezas.length > 1 && grandTotal > 0) {
       var pTotal = document.createElement('p');
@@ -497,6 +500,63 @@
     }
   }
 
+  /* ── Vínculo con la ficha de la novia ── */
+  var currentNoviaId = null;
+  async function fetchNoviaBasic(noviaId) {
+    if (!supabase) return null;
+    var r = await supabase.from('novias').select('nombre,total,presupuesto_items').eq('id', noviaId).single();
+    if (r.error) r = await supabase.from('novias').select('nombre,total').eq('id', noviaId).single();
+    return r.error ? null : r.data;
+  }
+  function collectRows() {
+    var items = [], total = 0;
+    document.querySelectorAll('.piece-row').forEach(function(row) {
+      var inputs = row.querySelectorAll('input');
+      var desc = inputs[0].value.trim(), precio = parseInt(inputs[1].value) || 0;
+      if (!desc && !precio) return;
+      items.push({ desc: desc, precio: precio }); total += precio;
+    });
+    return { items: items, total: total };
+  }
+  function setSaveStatus(msg, err) {
+    var el = document.getElementById('saveStatus');
+    if (!el) return;
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg || '';
+    el.style.color = err ? '#a33' : '#3a6b3a';
+  }
+  async function saveToFicha(data) {
+    if (!currentNoviaId || !supabase) return false;
+    var d = data || collectRows();
+    if (!d.total) { setSaveStatus('Cargá al menos una pieza con precio.', true); return false; }
+    setSaveStatus('Guardando…');
+    var r = await supabase.from('novias').update({ total: d.total, presupuesto_items: d.items }).eq('id', currentNoviaId);
+    if (r.error) r = await supabase.from('novias').update({ total: d.total }).eq('id', currentNoviaId);
+    if (r.error) { setSaveStatus('No se pudo guardar en la ficha: ' + r.error.message, true); return false; }
+    setSaveStatus('Guardado en la ficha: presupuesto $' + fmt(d.total));
+    return true;
+  }
+  function fillRows(items) {
+    var list = document.getElementById('piecesList');
+    list.innerHTML = '';
+    items.forEach(function(it) {
+      var row = document.createElement('div');
+      row.className = 'piece-row';
+      row.innerHTML =
+        '<input type="text" oninput="updatePreview()">' +
+        '<input type="number" oninput="updatePreview()">' +
+        '<button class="btn-remove" onclick="removePiece(this)" title="Quitar">×</button>';
+      row.querySelectorAll('input')[0].value = it.desc || '';
+      row.querySelectorAll('input')[1].value = it.precio || '';
+      list.appendChild(row);
+    });
+    if (!items.length) addPiece();
+  }
+  async function printBudget() {
+    if (currentNoviaId) await saveToFicha();
+    window.print();
+  }
+
   /* ── Init: detect mode and run ── */
   (async function() {
     var params = new URLSearchParams(window.location.search);
@@ -507,13 +567,24 @@
 
     /* Mode 1: Supabase (from app: ?novia=ID) */
     if (noviaId && initSupabase()) {
+      currentNoviaId = noviaId;
       var novia = await fetchNovia(noviaId);
-      if (novia) {
+      if (novia && novia.piezas && novia.piezas.length) {
         renderFromSupabase(novia);
         if (autoPrint) setTimeout(function() { window.print(); }, 600);
         return;
       }
-      console.warn('No se pudo cargar la novia #' + noviaId + ', modo manual activado.');
+      /* Sin piezas cargadas en la base: modo manual vinculado a la ficha */
+      var basic = await fetchNoviaBasic(noviaId);
+      if (basic) {
+        document.getElementById('brideName').value = basic.nombre || '';
+        var saved = Array.isArray(basic.presupuesto_items) ? basic.presupuesto_items : [];
+        if (saved.length) fillRows(saved);
+        else if (basic.total > 0) fillRows([{ desc: '', precio: basic.total }]);
+      }
+      document.getElementById('btnSaveFicha').style.display = '';
+      updatePreview();
+      return;
     }
 
     /* Mode 2: URL params manual (?nombre=X&piezas=desc|price;;desc2|price2) */

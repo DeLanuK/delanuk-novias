@@ -648,6 +648,10 @@ function openFicha(id, opts = {}) {
       ${n.sena_cita > 0 ? `<span>Seña cita ${n.sena_cita_pagada ? 'pagada' : 'sin pagar'}: <b>${n.sena_cita_pagada ? '−' : ''}$${fmt(n.sena_cita)}</b></span>` : ''}
       <span>Saldo final: <b>$${fmt((n.total || 0) - senaSugerida(n) - citaPagada(n))}</b></span>
     </div>` : ''}
+    ${(Array.isArray(n.presupuesto_items) && n.presupuesto_items.length) ? `<div class="calc-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <span style="opacity:.7">Detalle del presupuesto</span>
+      ${n.presupuesto_items.map(it => `<span>${escapeHtml(it.desc || 'Pieza')}: <b>$${fmt(it.precio || 0)}</b></span>`).join('')}
+    </div>` : ''}
     ${(n.pagos && n.pagos.length > 0)
       ? '<div class="pagos-lista">' + n.pagos.map((p, i) =>
           '<div class="pago-item"><span class="pago-fecha">' + p.fecha + '</span><span class="pago-concepto">' + escapeHtml(p.concepto) + '</span><span class="pago-monto">$' + fmt(p.monto) + '</span><button class="pago-del" onclick="deletePago(' + n.id + ',' + i + ')">×</button></div>'
