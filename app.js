@@ -48,6 +48,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     if (view === 'novias') renderNovias();
     if (view === 'pagos') renderPagos();
     if (view === 'entregadas') renderEntregadas();
+    if (view === 'piezas' && typeof renderPiezas === 'function') renderPiezas();
   });
 });
 
@@ -57,6 +58,8 @@ document.addEventListener('visibilitychange', async () => {
   if (document.getElementById('app').style.display === 'none') return;
   try { await sb.auth.getSession(); } catch (e) {}
   if (typeof loadNovias === 'function') loadNovias();
+  // El catálogo de piezas puede haber cambiado desde la pestaña del presupuesto
+  if (window.AppState.piezasLoaded && typeof loadPiezas === 'function') loadPiezas();
 });
 
 // ===== BOTONES DE "AGREGAR NOVIA" =====

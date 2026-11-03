@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="De LanuK">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -101,6 +101,10 @@
         <button class="nav-item" data-view="envio">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           Envío
+        </button>
+        <button class="nav-item" data-view="piezas">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20"/><path d="M8.5 3 12 22l3.5-19"/></svg>
+          Piezas
         </button>
         <button class="nav-item" data-view="entregadas">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -240,6 +244,37 @@
         </div>
       </section>
 
+      <section class="view" id="view-piezas">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Piezas</h1>
+            <p class="page-sub" id="piezas-sub">Catálogo de piezas presupuestadas · costo y precio a mano</p>
+          </div>
+          <button class="btn-primary" id="btn-add-pieza" onclick="openPieza()">+ Nueva pieza</button>
+        </div>
+        <div class="kpi-row" id="kpi-piezas"></div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="piezas-search" placeholder="Buscar: rosario, tocado, perlas, novia..." oninput="renderPiezas()">
+          </div>
+          <select id="piezas-filter-cat" onchange="renderPiezas()"><option value="">Todas las categorías</option></select>
+          <select id="piezas-filter-costo" onchange="renderPiezas()">
+            <option value="">Con y sin costo</option>
+            <option value="sin">Sin costo cargado</option>
+            <option value="con">Con costo cargado</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Pieza</th><th>Categoría</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Última vez</th><th>Veces</th><th></th>
+            </tr></thead>
+            <tbody id="piezas-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="view" id="view-entregadas">
         <div class="page-header">
           <div>
@@ -280,6 +315,10 @@
       <button class="nav-item" data-view="envio">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Envío</span>
+      </button>
+      <button class="nav-item" data-view="piezas">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20"/><path d="M8.5 3 12 22l3.5-19"/></svg>
+        <span>Piezas</span>
       </button>
       <button class="nav-item" data-view="entregadas">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -420,12 +459,44 @@
   </div>
 
 
+  <div class="overlay" id="overlay-pieza">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="pieza-modal-title">Nueva pieza</h2>
+        <button class="close-btn" onclick="closeModal('pieza')" aria-label="Cerrar">×</button>
+      </div>
+      <div class="form-scroll">
+        <input type="hidden" id="pz-id">
+        <div class="form-grid">
+          <div class="fg full"><label>Nombre de la pieza *</label><input id="pz-nombre" type="text" placeholder="Rosario de perlas 60 cm"></div>
+          <div class="fg"><label>Categoría</label>
+            <select id="pz-categoria">
+              <option>Rosario</option><option>Tocado</option><option>Tiara</option><option>Aros</option><option>Collar</option>
+              <option>Pulsera</option><option>Anillo</option><option>Tobillera</option><option>Prendedor</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Última vez presupuestada</label><input id="pz-fecha" type="date"></div>
+          <div class="fg"><label>Costo ($)</label><input id="pz-costo" type="number" min="0" inputmode="numeric" placeholder="0"></div>
+          <div class="fg"><label>Precio ($)</label><input id="pz-precio" type="number" min="0" inputmode="numeric" placeholder="0"></div>
+          <div class="fg full"><label>Detalle (medidas, piedra, baño, insumos)</label><textarea id="pz-descripcion" rows="2" placeholder="Perlas 6 mm, cadena forcet plata, crucifijo mediano..."></textarea></div>
+          <div class="fg full"><label>Notas internas</label><textarea id="pz-notas" rows="2"></textarea></div>
+        </div>
+        <p class="info-hint" id="pz-origen"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeModal('pieza')">Cancelar</button>
+        <button class="btn-primary" id="btn-save-pieza" onclick="savePieza()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
-  <script src="config.js?v=14"></script>
-<script src="api.js?v=14"></script>
-<script src="render.js?v=14"></script>
-<script src="auth.js?v=14"></script>
-<script src="app.js?v=14"></script>
+  <script src="config.js?v=15"></script>
+<script src="api.js?v=15"></script>
+<script src="render.js?v=15"></script>
+<script src="auth.js?v=15"></script>
+<script src="piezas.js?v=15"></script>
+<script src="app.js?v=15"></script>
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>

@@ -133,5 +133,24 @@ async function apiLoadCompras() {
   }));
 }
 async function apiInsertCompra(data)     { return sb.from('compras').insert(data); }
+
+// ===== OPERACIONES SOBRE PIEZAS (catálogo de piezas presupuestadas) =====
+async function apiLoadPiezas() {
+  const { data, error } = await sbCall(() => sb.from('piezas_catalogo')
+    .select('*')
+    .order('fecha', { ascending: false })
+    .order('id', { ascending: false }));
+  if (error) throw error;
+  return (data || []).map(p => ({
+    ...p,
+    costo: Number(p.costo) || 0,
+    precio: Number(p.precio) || 0,
+    veces: Number(p.veces) || 0,
+    activo: p.activo !== false,
+  }));
+}
+async function apiInsertPieza(data)     { return sbCall(() => sb.from('piezas_catalogo').insert(data).select().single()); }
+async function apiUpdatePieza(id, data) { return sbCall(() => sb.from('piezas_catalogo').update(data).eq('id', id).select().single()); }
+async function apiDeletePieza(id)       { return sbCall(() => sb.from('piezas_catalogo').delete().eq('id', id)); }
 async function apiUpdateCompra(id, data) { return sb.from('compras').update(data).eq('id', id); }
 async function apiDeleteCompra(id)       { return sb.from('compras').delete().eq('id', id); }

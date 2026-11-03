@@ -1,7 +1,7 @@
 // DELANUK Service Worker
 // Guarda los archivos del sitio para que cargue rápido y funcione offline
 
-const CACHE_NAME = 'delanuk-v14';
+const CACHE_NAME = 'delanuk-v15';
 const ARCHIVOS_BASE = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const ARCHIVOS_BASE = [
   './auth.js',
   './app.js',
   './compras.js',
+  './piezas.js',
   './manifest.json',
   './logo.png',
   './logo-blanco.png',

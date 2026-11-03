@@ -163,12 +163,31 @@
   }
   .piece-row {
     display: grid;
-    grid-template-columns: 1fr 140px 34px;
+    grid-template-columns: 1fr 104px 118px 34px;
     gap: 8px;
     align-items: end;
     margin-bottom: 8px;
   }
   .piece-row input { margin-bottom: 0 !important; }
+  .piece-row .inp-costo { background: #FDF2D0; }
+  .piece-desc-wrap { position: relative; }
+  .sug-list {
+    display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 50;
+    background: #fff; border: 1px solid #d8c7b8; border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(57,49,38,0.14); max-height: 280px; overflow-y: auto;
+  }
+  .sug-list.open { display: block; }
+  .sug-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1ebe3; }
+  .sug-item:last-child { border-bottom: none; }
+  .sug-item:hover, .sug-item.active { background: #FDFBF8; }
+  .sug-nombre { font-size: 13px; color: var(--ink); font-weight: 600; line-height: 1.3; }
+  .sug-meta { font-size: 11px; color: #8C6E5A; margin-top: 2px; }
+  .sug-meta b { color: #3f6b52; font-weight: 600; }
+  .sug-cat { display: inline-block; font-size: 10px; letter-spacing: .5px; text-transform: uppercase;
+    background: #E3E6D2; color: #6B6F4A; border-radius: 4px; padding: 1px 6px; margin-right: 6px; }
+  .sug-head { padding: 6px 12px; font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: #9a8e80; background: #faf7f2; }
+  .costo-line { font-size: 12px; color: #8C6E5A; text-align: right; margin-bottom: 10px; }
+  .costo-line b { color: #3f6b52; }
   .btn-remove {
     width: 34px; height: 38px;
     background: #f0e8e0; border: none; border-radius: 6px;
@@ -195,9 +214,10 @@
   .hint { font-size: 12px; color: #9a8e80; margin-top: 12px; line-height: 1.5; }
   .piece-row-labels {
     display: grid;
-    grid-template-columns: 1fr 140px 34px;
+    grid-template-columns: 1fr 104px 118px 34px;
     gap: 8px;
   }
+  .piece-row-labels .lbl-costo { color: #b08a3c; }
   .piece-row-labels span {
     font-size: 12px; font-weight: 600; color: #6B5E4F;
     text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px;
@@ -214,18 +234,14 @@
   <input type="text" id="brideName" placeholder="Ej: Valentina" oninput="updatePreview()">
   <div class="piece-row-labels">
     <span>Pieza</span>
+    <span class="lbl-costo" title="Costo interno: no se imprime en el presupuesto">Costo ($)</span>
     <span>Precio ($)</span>
     <span></span>
   </div>
-  <div id="piecesList">
-    <div class="piece-row">
-      <input type="text" placeholder="Collar de cadena en plata 925..." oninput="updatePreview()">
-      <input type="number" placeholder="0" oninput="updatePreview()">
-      <button class="btn-remove" onclick="removePiece(this)" title="Quitar">&times;</button>
-    </div>
-  </div>
+  <div id="piecesList"></div>
   <button class="btn-add" onclick="addPiece()">+ Agregar otra pieza</button>
   <div class="total-line" id="totalLine">Total: $0</div>
+  <div class="costo-line" id="costoLine"></div>
   <button class="btn-print btn-save" id="btnSave" onclick="guardarEnFicha()" style="display:none">Guardar en la ficha</button>
   <button class="btn-print btn-wa" id="btnWa" onclick="enviarWhatsApp()" style="display:none">Enviar PDF por WhatsApp</button>
   <button class="btn-print" onclick="window.print()">Descargar PDF</button>
@@ -380,7 +396,7 @@
       if (guardado.length) {
         return {
           id: res.data.id, nombre: res.data.nombre, tel: res.data.tel, editable: true,
-          piezas: guardado.map(function(it) { return { nombre: it.desc, variantes: [{ desc: it.desc, precio: parseInt(it.precio) || 0 }], total: parseInt(it.precio) || 0 }; })
+          piezas: guardado.map(function(it) { return { nombre: it.desc, variantes: [{ desc: it.desc, precio: parseInt(it.precio) || 0, costo: parseInt(it.costo) || 0 }], total: parseInt(it.precio) || 0 }; })
         };
       }
 
@@ -532,19 +548,9 @@
     var list = document.getElementById('piecesList');
     list.innerHTML = '';
     var items = [];
-    novia.piezas.forEach(function(p) { p.variantes.forEach(function(v) { items.push({ desc: v.desc, precio: v.precio }); }); });
+    novia.piezas.forEach(function(p) { p.variantes.forEach(function(v) { items.push({ desc: v.desc, precio: v.precio, costo: v.costo }); }); });
     if (!items.length) items.push({ desc: novia.sugerencia || '', precio: '' });
-    items.forEach(function(it) {
-      var row = document.createElement('div');
-      row.className = 'piece-row';
-      row.innerHTML =
-        '<input type="text" placeholder="Descripción de la pieza" oninput="updatePreview()">' +
-        '<input type="number" placeholder="0" oninput="updatePreview()">' +
-        '<button class="btn-remove" onclick="removePiece(this)" title="Quitar">×</button>';
-      row.querySelectorAll('input')[0].value = it.desc || '';
-      row.querySelectorAll('input')[1].value = it.precio || '';
-      list.appendChild(row);
-    });
+    items.forEach(function(it) { crearFila(it.desc, it.precio, it.costo); });
     document.getElementById('btnSave').style.display = '';
     document.getElementById('saveHint').textContent = 'Guardar en la ficha carga el total como Presupuesto de ' + (novia.nombre || 'la novia') + ' y guarda el detalle. Descargar PDF abre el diálogo de impresión.';
     updatePreview();
@@ -553,10 +559,14 @@
   function leerItems() {
     var items = [];
     document.querySelectorAll('.piece-row').forEach(function(row) {
-      var inputs = row.querySelectorAll('input');
-      var desc = inputs[0].value.trim();
-      var precio = parseInt(inputs[1].value) || 0;
-      if (desc || precio) items.push({ desc: desc, precio: precio });
+      var desc = row.querySelector('.inp-desc').value.trim();
+      var precio = parseInt(row.querySelector('.inp-precio').value) || 0;
+      var costo = parseInt(row.querySelector('.inp-costo').value) || 0;
+      if (desc || precio) {
+        var it = { desc: desc, precio: precio };
+        if (costo > 0) it.costo = costo;
+        items.push(it);
+      }
     });
     return items;
   }
@@ -572,8 +582,10 @@
       if (!sess.data || !sess.data.session) throw new Error('Iniciá sesión en la app y volvé a abrir el presupuesto desde la ficha.');
       var res = await supabase.from('novias').update({ presupuesto: items, total: total }).eq('id', NOVIA_ID);
       if (res.error) throw res.error;
-      btn.textContent = 'Guardado ✓ · Total $' + fmt(total);
-      setTimeout(function() { btn.disabled = false; btn.textContent = 'Guardar en la ficha'; }, 2500);
+      /* Registrar las piezas en el catálogo (si la tabla todavía no existe, no frena el guardado) */
+      var nCat = await registrarEnCatalogo(items);
+      btn.textContent = 'Guardado ✓ · Total $' + fmt(total) + (nCat > 0 ? ' · ' + nCat + ' pieza' + (nCat === 1 ? '' : 's') + ' al catálogo' : '');
+      setTimeout(function() { btn.disabled = false; btn.textContent = 'Guardar en la ficha'; }, 3000);
     } catch (e) {
       console.error(e);
       btn.disabled = false; btn.textContent = 'Guardar en la ficha';
@@ -632,17 +644,162 @@
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
+  /* ══════════════════════════════════════════════════════════
+     CATÁLOGO DE PIEZAS — sugerencias de piezas ya presupuestadas
+     (tabla piezas_catalogo en Supabase; ver SETUP_PIEZAS.md)
+     ══════════════════════════════════════════════════════════ */
+  var CATALOGO = [];
+  var CATALOGO_OK = false;
+
+  function normalizar(s) {
+    return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  async function cargarCatalogo() {
+    if (!supabase) return;
+    try {
+      var sess = await supabase.auth.getSession();
+      if (!sess.data || !sess.data.session) return;
+      var res = await supabase.from('piezas_catalogo')
+        .select('id, nombre, categoria, descripcion, costo, precio, novia_nombre, fecha, veces')
+        .eq('activo', true)
+        .order('fecha', { ascending: false })
+        .order('id', { ascending: false });
+      if (res.error) { console.warn('Catálogo de piezas no disponible:', res.error.message); return; }
+      CATALOGO = (res.data || []).map(function(p) {
+        p.key = normalizar(p.nombre + ' ' + (p.categoria || '') + ' ' + (p.descripcion || ''));
+        p.precio = Number(p.precio) || 0;
+        p.costo = Number(p.costo) || 0;
+        return p;
+      });
+      CATALOGO_OK = true;
+    } catch (e) { console.warn('Catálogo de piezas:', e); }
+  }
+
+  async function registrarEnCatalogo(items) {
+    if (!supabase || !items.length) return 0;
+    try {
+      var nombreNovia = document.getElementById('brideName').value.trim() || null;
+      var res = await supabase.rpc('registrar_piezas', { p_items: items, p_novia_id: NOVIA_ID, p_novia_nombre: nombreNovia });
+      if (res.error) { console.warn('No se pudo registrar en el catálogo:', res.error.message); return 0; }
+      cargarCatalogo(); /* refrescar sugerencias en segundo plano */
+      return Number(res.data) || 0;
+    } catch (e) { console.warn('Catálogo:', e); return 0; }
+  }
+
+  function buscarSugerencias(q) {
+    q = normalizar(q);
+    if (!q) return CATALOGO.slice(0, 8);
+    var palabras = q.split(' ').filter(Boolean);
+    var res = CATALOGO.filter(function(p) {
+      return palabras.every(function(w) { return p.key.indexOf(w) !== -1; });
+    });
+    /* Las que empiezan igual primero, después las más recientes */
+    res.sort(function(a, b) {
+      var sa = normalizar(a.nombre).indexOf(q) === 0 ? 0 : 1;
+      var sb = normalizar(b.nombre).indexOf(q) === 0 ? 0 : 1;
+      return sa - sb;
+    });
+    return res.slice(0, 8);
+  }
+
+  function fmtFechaCorta(iso) {
+    if (!iso) return '';
+    var p = String(iso).slice(0, 10).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0].slice(2) : iso;
+  }
+
+  function renderSugerencias(input) {
+    var box = input.parentElement.querySelector('.sug-list');
+    if (!box) return;
+    if (!CATALOGO_OK || !CATALOGO.length) { box.classList.remove('open'); return; }
+    var q = input.value;
+    var lista = buscarSugerencias(q);
+    if (!lista.length) { box.classList.remove('open'); return; }
+    var html = '<div class="sug-head">' + (normalizar(q) ? 'Piezas parecidas que ya presupuestaste' : 'Últimas piezas presupuestadas') + '</div>';
+    lista.forEach(function(p, i) {
+      var meta = [];
+      meta.push('<b>$' + fmt(Math.round(p.precio)) + '</b>');
+      if (p.costo > 0) meta.push('costo $' + fmt(Math.round(p.costo)));
+      if (p.novia_nombre) meta.push(p.novia_nombre);
+      if (p.fecha) meta.push(fmtFechaCorta(p.fecha));
+      if (p.veces > 1) meta.push(p.veces + ' veces');
+      html += '<div class="sug-item" data-i="' + i + '" onmousedown="event.preventDefault(); elegirSugerencia(this)">' +
+        '<div class="sug-nombre">' + (p.categoria ? '<span class="sug-cat">' + escapeTxt(p.categoria) + '</span>' : '') + escapeTxt(p.nombre) + '</div>' +
+        '<div class="sug-meta">' + meta.join(' · ') + '</div></div>';
+    });
+    box.innerHTML = html;
+    box._lista = lista;
+    box._input = input;
+    box.classList.add('open');
+  }
+
+  function elegirSugerencia(el) {
+    var box = el.parentElement;
+    var p = box._lista && box._lista[Number(el.getAttribute('data-i'))];
+    if (!p) return;
+    var row = box._input.closest('.piece-row');
+    row.querySelector('.inp-desc').value = p.nombre;
+    if (p.precio > 0) row.querySelector('.inp-precio').value = Math.round(p.precio);
+    if (p.costo > 0) row.querySelector('.inp-costo').value = Math.round(p.costo);
+    cerrarSugerencias(box);
+    updatePreview();
+    row.querySelector('.inp-precio').focus();
+  }
+
+  function cerrarSugerencias(box) { if (box) box.classList.remove('open'); }
+
+  function onDescInput(input) { renderSugerencias(input); updatePreview(); }
+  function onDescFocus(input) { renderSugerencias(input); }
+  function onDescBlur(input) {
+    var box = input.parentElement.querySelector('.sug-list');
+    setTimeout(function() { cerrarSugerencias(box); }, 150);
+  }
+  function onDescKey(input, ev) {
+    var box = input.parentElement.querySelector('.sug-list');
+    if (!box || !box.classList.contains('open')) return;
+    var items = box.querySelectorAll('.sug-item');
+    if (!items.length) return;
+    var idx = -1;
+    items.forEach(function(it, i) { if (it.classList.contains('active')) idx = i; });
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); idx = Math.min(idx + 1, items.length - 1); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); idx = Math.max(idx - 1, 0); }
+    else if (ev.key === 'Enter') { if (idx >= 0) { ev.preventDefault(); elegirSugerencia(items[idx]); } return; }
+    else if (ev.key === 'Escape') { cerrarSugerencias(box); return; }
+    else return;
+    items.forEach(function(it, i) { it.classList.toggle('active', i === idx); });
+    if (items[idx] && items[idx].scrollIntoView) items[idx].scrollIntoView({ block: 'nearest' });
+  }
+
+  function escapeTxt(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   /* ── Manual form functions ── */
-  function addPiece() {
+  /* Única forma de crear una fila: descripción (con sugerencias) + costo interno + precio */
+  function crearFila(desc, precio, costo) {
     var list = document.getElementById('piecesList');
     var row = document.createElement('div');
     row.className = 'piece-row';
     row.innerHTML =
-      '<input type="text" placeholder="Descripcion de la pieza" oninput="updatePreview()">' +
-      '<input type="number" placeholder="0" oninput="updatePreview()">' +
+      '<div class="piece-desc-wrap">' +
+        '<input type="text" class="inp-desc" placeholder="Collar de cadena en plata 925..." autocomplete="off" ' +
+          'oninput="onDescInput(this)" onfocus="onDescFocus(this)" onblur="onDescBlur(this)" onkeydown="onDescKey(this, event)">' +
+        '<div class="sug-list"></div>' +
+      '</div>' +
+      '<input type="number" class="inp-costo" placeholder="costo" min="0" inputmode="numeric" title="Costo interno (no se imprime)" oninput="updatePreview()">' +
+      '<input type="number" class="inp-precio" placeholder="0" min="0" inputmode="numeric" oninput="updatePreview()">' +
       '<button class="btn-remove" onclick="removePiece(this)" title="Quitar">×</button>';
+    row.querySelector('.inp-desc').value = desc || '';
+    row.querySelector('.inp-precio').value = (precio === 0 || precio === '' || precio === undefined || precio === null) ? '' : precio;
+    row.querySelector('.inp-costo').value = (costo > 0) ? costo : '';
     list.appendChild(row);
-    row.querySelector('input').focus();
+    return row;
+  }
+
+  function addPiece() {
+    var row = crearFila('', '', '');
+    row.querySelector('.inp-desc').focus();
   }
 
   function removePiece(btn) {
@@ -660,11 +817,12 @@
     var display = document.getElementById('piecesDisplay');
     display.innerHTML = '';
     var total = 0;
+    var costoTotal = 0;
 
     rows.forEach(function(row) {
-      var inputs = row.querySelectorAll('input');
-      var desc = inputs[0].value.trim() || 'Descripcion de la pieza';
-      var price = parseInt(inputs[1].value) || 0;
+      var desc = row.querySelector('.inp-desc').value.trim() || 'Descripcion de la pieza';
+      var price = parseInt(row.querySelector('.inp-precio').value) || 0;
+      costoTotal += parseInt(row.querySelector('.inp-costo').value) || 0;
       total += price;
 
       var pDesc = document.createElement('p');
@@ -684,6 +842,17 @@
 
     var tl = document.getElementById('totalLine');
     if (tl) tl.textContent = 'Total: $' + fmt(total);
+    var cl = document.getElementById('costoLine');
+    if (cl) {
+      if (costoTotal > 0 && total > 0) {
+        var margen = Math.round((total - costoTotal) / total * 100);
+        cl.innerHTML = 'Costo: $' + fmt(costoTotal) + ' · Margen: <b>' + margen + '%</b> <span style="color:#b9ad9e">(interno, no se imprime)</span>';
+      } else if (costoTotal > 0) {
+        cl.textContent = 'Costo: $' + fmt(costoTotal);
+      } else {
+        cl.textContent = '';
+      }
+    }
 
     if (rows.length > 1 && total > 0) {
       var pTotal = document.createElement('p');
@@ -701,8 +870,12 @@
     var piezas = params.get('piezas');
     var autoPrint = params.get('print') === '1';
 
+    /* El catálogo de piezas se carga en segundo plano siempre que haya sesión */
+    var sbOk = initSupabase();
+    if (sbOk) cargarCatalogo();
+
     /* Mode 1: Supabase (from app: ?novia=ID) */
-    if (noviaId && initSupabase()) {
+    if (noviaId && sbOk) {
       var novia = await fetchNovia(noviaId);
       if (novia) {
         renderFromSupabase(novia);
@@ -716,18 +889,12 @@
     if (nombre) document.getElementById('brideName').value = nombre;
 
     if (piezas) {
-      var list = document.getElementById('piecesList');
-      list.innerHTML = '';
       piezas.split(';;').forEach(function(p) {
         var parts = p.split('|');
-        var row = document.createElement('div');
-        row.className = 'piece-row';
-        row.innerHTML =
-          '<input type="text" value="' + (parts[0]||'').replace(/"/g,'&quot;') + '" oninput="updatePreview()">' +
-          '<input type="number" value="' + (parts[1]||'') + '" oninput="updatePreview()">' +
-          '<button class="btn-remove" onclick="removePiece(this)">×</button>';
-        list.appendChild(row);
+        crearFila(parts[0] || '', parts[1] || '', '');
       });
+    } else {
+      crearFila('', '', '');
     }
 
     updatePreview();
