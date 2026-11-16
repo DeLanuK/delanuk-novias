@@ -636,5 +636,59 @@ a:focus-visible{outline:2px solid #393126;outline-offset:3px}
 </section>
 <a class="m-cta" href="#reservar">Agendar cita</a>
 </div>
+<script>
+/* Catálogo "Para tu fecha": lo eligen en el sistema interno; acá solo se muestra. Cada pieza abre WhatsApp con la consulta armada. */
+(function () {
+  var API = 'https://delanuk-calendarios.pages.dev/api/catalogo';
+  var WA = 'https://wa.me/5493518131088?text=';
+  var grid = document.querySelector('#listas-grilla .pg');
+  if (!grid) return;
+  var modelo = grid.querySelector('a[data-pid]');
+  if (!modelo) return;
+  function textos(a) { return a.querySelectorAll(':scope > div:last-child > span'); }
+  function consulta(a, nombre) {
+    a.href = WA + encodeURIComponent('Hola! Me interesa ' + nombre + ' (Para tu fecha). Mi fecha es el (fecha). ¿Se puede armar?');
+    a.target = '_blank'; a.rel = 'noopener';
+    if (!a.querySelector('.cat-consultar')) {
+      var s = document.createElement('span');
+      s.className = 'cat-consultar';
+      s.textContent = 'Consultar →';
+      s.style.cssText = 'font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6B6153;font-weight:500;margin-top:4px';
+      a.querySelector(':scope > div:last-child').appendChild(s);
+    }
+  }
+  function precio(n) { return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  // Las que ya están en la página: desde el primer momento llevan a la consulta
+  Array.prototype.forEach.call(grid.querySelectorAll('a[data-pid]'), function (a) {
+    var t = textos(a); consulta(a, (t[0] ? t[0].textContent : '') + (t[1] ? ' - ' + t[1].textContent.replace(/\s*\|\s*/g, ' ') : ''));
+  });
+  fetch(API).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.ok || !d.piezas || !d.piezas.length) return;
+    var hay = {};
+    Array.prototype.forEach.call(grid.querySelectorAll('a[data-pid]'), function (a) { hay[a.getAttribute('data-pid')] = a; });
+    var frag = document.createDocumentFragment();
+    d.piezas.forEach(function (p) {
+      var propia = hay[String(p.id)];
+      var a = propia || modelo.cloneNode(true);
+      var t = textos(a);
+      if (!propia) {
+        var partes = String(p.nombre).split(' - ');
+        a.setAttribute('data-pid', p.id);
+        var img = a.querySelector('img');
+        if (img) { if (p.foto) img.src = p.foto; img.alt = partes[0]; }
+        if (t[0]) t[0].textContent = partes[0];
+        if (t[1]) t[1].textContent = partes.slice(1).join(' - ');
+      }
+      if (p.precio && t[2]) { t[2].textContent = precio(p.precio); t[2].setAttribute('data-price', p.precio); }
+      consulta(a, p.nombre);
+      frag.appendChild(a);
+    });
+    grid.textContent = '';
+    grid.appendChild(frag);
+    var f = document.querySelector('#listas-grilla [data-updated]');
+    if (f) f.textContent = 'Precios actualizados';
+  }).catch(function () {});
+})();
+</script>
 </body>
 </html>
