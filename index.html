@@ -72,13 +72,36 @@ section.b{padding-top:120px}
 footer.w{margin-top:120px;border-top:1px solid #D8D1BE;padding-top:28px;padding-bottom:40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 32px;font-size:12px;color:#6B6357}
 footer nav{gap:4px 24px}
 @media (max-width:640px){section.b{padding-top:88px}.foto{justify-self:stretch;max-width:none;order:-1}.hero{padding-top:20px}}
+.hb{display:none}
+.hb-b{display:none}
+@media (max-width:700px){
+header.hd{position:sticky;top:0;z-index:30;flex-wrap:nowrap;padding-top:6px;padding-bottom:6px;background:rgba(246,244,238,.96);border-bottom:1px solid #E7E1D0}
+.hb{display:flex;flex:none;width:44px;height:44px;align-items:center;justify-content:center;border:0;background:transparent;color:#2A2218;padding:0;margin-right:-10px;cursor:pointer}
+.hb[aria-expanded="true"] .hb-a{display:none}
+.hb[aria-expanded="true"] .hb-b{display:inline}
+.mn{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;background:#F6F4EE;border-bottom:1px solid #D8D1BE;padding:6px 24px 18px;flex-direction:column;flex-wrap:nowrap;gap:0;font-size:11px;text-align:center;box-shadow:0 18px 30px -22px rgba(42,34,24,.35)}
+.mn.open{display:flex}
+.mn a{padding:17px 0;border-top:1px solid #E7E1D0}
+.mn a:first-child{border-top:0}
+section{scroll-margin-top:52px}
+.hero .txt{align-items:center;text-align:center;gap:32px}
+.hero .logo{margin:4px auto 0;width:min(250px,72%)}
+.hero .bajada{margin-left:auto;margin-right:auto}
+.hero .acc{flex-direction:column;gap:10px;justify-content:center}
+.hero .acc .bt,.cierre .bt{width:100%}
+.cierre{flex-direction:column;text-align:center;gap:24px}
+.cierre .bt{align-self:stretch}
+footer.w{flex-direction:column;text-align:center;margin-top:88px}
+footer nav{justify-content:center}
+}
 @media (prefers-reduced-motion:reduce){.ph{transition:none}}
 </style>
 </head>
 <body>
-<header class="w">
+<header class="w hd">
 <a href="/" style="display:flex;align-items:center;gap:14px;min-height:44px"><span class="et">Piezas a medida</span></a>
-<nav>
+<button type="button" class="hb" id="hb" aria-label="Abrir el menú" aria-expanded="false" aria-controls="menu"><svg aria-hidden="true" width="24" height="16" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1"><path class="hb-a" d="M1 2h22M1 8h22M1 14h22"></path><path class="hb-b" d="M4 0l16 16M20 0L4 16"></path></svg></button>
+<nav class="mn" id="menu">
 <a href="#como">Cómo trabajamos</a>
 <a href="#novias">Novias reales</a>
 <a href="https://instagram.com/de.lanuk" target="_blank" rel="noopener">Instagram</a>
@@ -301,6 +324,15 @@ footer nav{gap:4px 24px}
     else if (/catalogo\/?$/.test(h)) ev('catalogo');
     else if (h.indexOf('delanuk.com') > -1 && h.indexOf('amedida') < 0) ev('tienda');
   }, true);
+})();
+</script>
+<script>
+(function(){var b=document.getElementById('hb'),m=document.getElementById('menu');if(!b||!m)return;
+function set(o){m.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');b.setAttribute('aria-label',o?'Cerrar el menú':'Abrir el menú');}
+b.addEventListener('click',function(e){e.stopPropagation();set(!m.classList.contains('open'));});
+m.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+document.addEventListener('click',function(e){if(!m.contains(e.target))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
 })();
 </script>
 </body>
