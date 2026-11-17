@@ -60,21 +60,24 @@ section.b{padding-top:120px}
 .pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:36px 48px;padding-top:44px}
 .pasos .n,.serv .n{font-size:10px;letter-spacing:3px;color:#6B6357;font-weight:400}
 .pasos p{margin:10px 0 0;font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;line-height:1.25;text-wrap:balance}
-.serv{padding-top:20px}
-.serv div{display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,1.6fr);gap:6px 24px;align-items:baseline;padding:22px 0;border-bottom:1px solid #D8D1BE}
-.serv .nom{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;line-height:1.2}
-.serv .d{font-size:14px;color:#4A4136}
+.serv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px 20px;padding-top:44px}
+.serv article{display:flex;flex-direction:column;gap:12px}
+.serv .mf{aspect-ratio:3/4;overflow:hidden;background:#E7E1D0}
+.serv .nom{margin:6px 0 0;font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:28px;line-height:1.15}
+.serv .d{margin:0;font-size:14px;color:#4A4136}
+@media (max-width:1000px){.serv{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.serv{grid-template-columns:1fr}}
 .cierre{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px 48px;padding-top:56px}
 .cierre p{margin:0;max-width:520px;font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(26px,3.4vw,36px);line-height:1.2;text-wrap:balance}
 footer.w{margin-top:120px;border-top:1px solid #D8D1BE;padding-top:28px;padding-bottom:40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 32px;font-size:12px;color:#6B6357}
 footer nav{gap:4px 24px}
-@media (max-width:640px){.serv div{grid-template-columns:44px minmax(0,1fr)}.serv .d{grid-column:2}section.b{padding-top:88px}.foto{justify-self:stretch;max-width:none;order:-1}.hero{padding-top:20px}}
+@media (max-width:640px){section.b{padding-top:88px}.foto{justify-self:stretch;max-width:none;order:-1}.hero{padding-top:20px}}
 @media (prefers-reduced-motion:reduce){.ph{transition:none}}
 </style>
 </head>
 <body>
 <header class="w">
-<a href="/" style="display:flex;align-items:center;gap:14px;min-height:44px"><img src="portada/dlk.svg" alt="DLK" style="height:18px;width:auto;display:block"><span class="et">Piezas a medida</span></a>
+<a href="/" style="display:flex;align-items:center;gap:14px;min-height:44px"><span class="et">Piezas a medida</span></a>
 <nav>
 <a href="#como">Cómo trabajamos</a>
 <a href="https://instagram.com/de.lanuk" target="_blank" rel="noopener">Instagram</a>
@@ -120,10 +123,10 @@ footer nav{gap:4px 24px}
 <section id="servicios" class="w b">
 <div class="cab"><div><div class="t">Servicios</div><div class="s">Los cuatro</div></div><p>Cuanto más tuya es la pieza, más tiempo lleva. Te contamos el detalle de cada uno por WhatsApp.</p></div>
 <div class="serv">
-<div><span class="n">(01)</span><span class="nom">Para tu fecha</span><span class="d">Piezas de armado rápido, para cuando la fecha está cerca.</span></div>
-<div><span class="n">(02)</span><span class="nom">De colección</span><span class="d">Una pieza de la Colección Luz, preparada para vos tal como es.</span></div>
-<div><span class="n">(03)</span><span class="nom">A tu medida</span><span class="d">Una pieza de la Colección Luz con los cambios que a vos te importan.</span></div>
-<div><span class="n">(04)</span><span class="nom">Desde cero</span><span class="d">Un diseño nuevo a partir de tu idea.</span></div>
+<article data-auto="5000" data-gal="[[{&quot;src&quot;:&quot;portada/estela.jpg&quot;,&quot;alt&quot;:&quot;Aro dorado con perla, de perfil&quot;}],[{&quot;src&quot;:&quot;portada/pulsera.jpg&quot;,&quot;alt&quot;:&quot;Pulsera de perlas con cruz y una cala&quot;}],[{&quot;src&quot;:&quot;portada/aros.jpg&quot;,&quot;alt&quot;:&quot;Aros dorados con perlas&quot;}]]"><div class="n">(01)</div><div class="mf"><img class="ph" data-slot="0" loading="lazy" src="portada/estela.jpg" alt="Aro dorado con perla, de perfil" width="1200" height="1500"></div><h3 class="nom">Para tu fecha</h3><p class="d">Piezas de armado rápido, para cuando la fecha está cerca.</p></article>
+<article data-auto="5650" data-gal="[[{&quot;src&quot;:&quot;portada/constelacion.jpg&quot;,&quot;alt&quot;:&quot;Collar de perlas de dos vueltas con broche dorado&quot;}],[{&quot;src&quot;:&quot;portada/choker.jpg&quot;,&quot;alt&quot;:&quot;Choker con sol dorado y aro con perla&quot;}],[{&quot;src&quot;:&quot;portada/vela.jpg&quot;,&quot;alt&quot;:&quot;Choker de gasa con sol dorado&quot;}]]"><div class="n">(02)</div><div class="mf"><img class="ph" data-slot="0" loading="lazy" src="portada/constelacion.jpg" alt="Collar de perlas de dos vueltas con broche dorado" width="1200" height="1500"></div><h3 class="nom">De colección</h3><p class="d">Una pieza de la Colección Luz, preparada para vos tal como es.</p></article>
+<article data-auto="6300" data-gal="[[{&quot;src&quot;:&quot;portada/rosario.jpg&quot;,&quot;alt&quot;:&quot;Rosario de perlas sobre un vestido blanco&quot;}],[{&quot;src&quot;:&quot;portada/espalda.jpg&quot;,&quot;alt&quot;:&quot;Collar de espalda con perlas&quot;}],[{&quot;src&quot;:&quot;portada/brazalete.jpg&quot;,&quot;alt&quot;:&quot;Peineta, aro largo y brazalete con perlas&quot;}]]"><div class="n">(03)</div><div class="mf"><img class="ph" data-slot="0" loading="lazy" src="portada/rosario.jpg" alt="Rosario de perlas sobre un vestido blanco" width="1200" height="1500"></div><h3 class="nom">A tu medida</h3><p class="d">Una pieza de la Colección Luz con los cambios que a vos te importan.</p></article>
+<article data-auto="6950" data-gal="[[{&quot;src&quot;:&quot;portada/perfil.jpg&quot;,&quot;alt&quot;:&quot;Peineta dorada y aro largo de perlas&quot;}],[{&quot;src&quot;:&quot;portada/aro.jpg&quot;,&quot;alt&quot;:&quot;Aro dorado con perlas&quot;}],[{&quot;src&quot;:&quot;portada/peineta.jpg&quot;,&quot;alt&quot;:&quot;Peineta dorada en un rodete&quot;}]]"><div class="n">(04)</div><div class="mf"><img class="ph" data-slot="0" loading="lazy" src="portada/perfil.jpg" alt="Peineta dorada y aro largo de perlas" width="1200" height="1500"></div><h3 class="nom">Desde cero</h3><p class="d">Un diseño nuevo a partir de tu idea.</p></article>
 </div>
 <div class="cierre">
 <p>Contanos tu fecha y qué imaginás. Lo demás lo vemos juntas.</p>
