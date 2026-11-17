@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-pagina="catalogo">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -139,6 +139,30 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
     var f = document.querySelector('[data-updated]');
     if (f) f.textContent = 'Precios actualizados. Pueden cambiar sin aviso.';
   }).catch(function () {});
+})();
+/* Medición propia: avisa visitas y clics al sistema interno. No guarda nada de quien entra (ni IP, ni dispositivo, ni cookies). */
+(function () {
+  if (location.hostname !== 'amedida.delanuk.com') return;
+  var U = 'https://delanuk-calendarios.pages.dev/api/ev', P = document.documentElement.getAttribute('data-pagina') || 'inicio';
+  function ev(t, d) {
+    try {
+      var b = t + '|' + P + '|' + String(d || '').replace(/\|/g, ' ').slice(0, 100);
+      if (navigator.sendBeacon) navigator.sendBeacon(U, b); else fetch(U, { method: 'POST', body: b, keepalive: true });
+    } catch (e) {}
+  }
+  try { if (!sessionStorage.getItem('dlk-v-' + P)) { sessionStorage.setItem('dlk-v-' + P, '1'); ev('visita'); } } catch (e) { ev('visita'); }
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a') : null; if (!a) return;
+    var h = a.getAttribute('href') || '';
+    if (h.indexOf('wa.me') > -1) {
+      var d = a.getAttribute('data-ev');
+      if (!d && a.hasAttribute('data-pid') && a.children[1]) d = a.children[1].textContent;
+      if (!d) { var s = a.closest('section[id], header, footer'); d = s ? (s.id || (s.tagName === 'HEADER' ? 'cabecera' : 'pie')) : P; }
+      ev('whatsapp', d);
+    } else if (h.indexOf('calendly') > -1) ev('cita');
+    else if (/catalogo\/?$/.test(h)) ev('catalogo');
+    else if (h.indexOf('delanuk.com') > -1 && h.indexOf('amedida') < 0) ev('tienda');
+  }, true);
 })();
 </script>
 </body>
