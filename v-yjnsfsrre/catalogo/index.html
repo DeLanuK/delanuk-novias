@@ -113,6 +113,41 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
     });
     return o;
   }
+  /* Con muchas piezas, arriba aparecen los tipos (Aros, Collares…) para ver de a uno. */
+  var TIPOS = [['Aros', /^aros?\b/i], ['Collares', /^(collar|cadena|gargantilla|choker)/i], ['Anillos', /^anillo/i], ['Brazaletes', /^(brazalete|pulsera)/i], ['Horquillas', /^horquilla/i], ['Tocados', /^(tocado|casquete|vincha|peineta)/i]];
+  function tipoDe(n) { for (var k = 0; k < TIPOS.length; k++) if (TIPOS[k][1].test(n)) return TIPOS[k][0]; return 'Otras piezas'; }
+  function filtros() {
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('a[data-pid]'));
+    var viejo = document.getElementById('listas-tipos'); if (viejo) viejo.parentNode.removeChild(viejo);
+    if (cards.length < 13) return;
+    var cuenta = {}, orden = [];
+    cards.forEach(function (a) {
+      var t = tipoDe(a.children[1] ? a.children[1].textContent.trim() : '');
+      a.setAttribute('data-tipo', t);
+      if (!cuenta[t]) { cuenta[t] = 0; orden.push(t); }
+      cuenta[t]++;
+    });
+    if (orden.length < 2) return;
+    var bar = document.createElement('div');
+    bar.id = 'listas-tipos';
+    bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Tipo de pieza');
+    bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px 28px;padding-bottom:20px;font-size:10px;letter-spacing:3px;text-transform:uppercase;';
+    function boton(texto, t) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = texto;
+      b.style.cssText = 'min-height:44px;padding:0;border:0;border-bottom:1px solid transparent;background:transparent;color:#2A2218;cursor:pointer;font:inherit;letter-spacing:inherit;text-transform:inherit;font-weight:400;';
+      b.addEventListener('click', function () {
+        cards.forEach(function (a) { a.style.display = (!t || a.getAttribute('data-tipo') === t) ? 'flex' : 'none'; });
+        Array.prototype.forEach.call(bar.children, function (x) { x.style.fontWeight = '400'; x.style.borderBottomColor = 'transparent'; x.setAttribute('aria-pressed', 'false'); });
+        b.style.fontWeight = '500'; b.style.borderBottomColor = '#2A2218'; b.setAttribute('aria-pressed', 'true');
+      });
+      bar.appendChild(b); return b;
+    }
+    var todas = boton('Todas (' + cards.length + ')', '');
+    orden.forEach(function (t) { boton(t + ' (' + cuenta[t] + ')', t); });
+    todas.style.fontWeight = '500'; todas.style.borderBottomColor = '#2A2218'; todas.setAttribute('aria-pressed', 'true');
+    grid.parentNode.insertBefore(bar, grid);
+  }
   fetch(API).then(function (r) { return r.json(); }).then(function (d) {
     if (!d || !d.ok || !d.piezas || !d.piezas.length) return;
     var hay = {};
@@ -136,6 +171,7 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
     });
     grid.textContent = '';
     grid.appendChild(frag);
+    filtros();
     var f = document.querySelector('[data-updated]');
     if (f) f.textContent = 'Precios actualizados. Pueden cambiar sin aviso.';
   }).catch(function () {});
