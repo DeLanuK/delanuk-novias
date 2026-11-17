@@ -112,7 +112,7 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
     return o;
   }
   /* Con muchas piezas, arriba aparecen los tipos (Aros, Collares…) para ver de a uno. */
-  var TIPOS = [['Aros', /^aros?\b/i], ['Collares', /^(collar|cadena|gargantilla|choker)/i], ['Anillos', /^anillo/i], ['Brazaletes', /^(brazalete|pulsera)/i], ['Horquillas', /^horquilla/i], ['Tocados', /^(tocado|casquete|vincha|peineta)/i]];
+  var TIPOS = [['Aros', /^aros?\b/i], ['Collares', /^(collar|cadena|gargantilla|choker)/i], ['Anillos', /^anillo/i], ['Brazaletes', /^(brazalete|pulsera)/i], ['Horquillas', /^horquilla/i], ['Tocados', /^(tocado|casquete|vincha|peineta)/i], ['Rosarios', /^(rosario|denario)/i]];
   function tipoDe(n) { for (var k = 0; k < TIPOS.length; k++) if (TIPOS[k][1].test(n)) return TIPOS[k][0]; return 'Otras piezas'; }
   function filtros() {
     var cards = Array.prototype.slice.call(grid.querySelectorAll('a[data-pid]'));
