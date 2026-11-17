@@ -32,6 +32,19 @@ a:hover{color:#5E6440}
 .ph{transition:opacity .45s ease}
 .ph.out{opacity:0}
 button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3px}
+@media (max-width:700px){
+header{position:sticky;top:0;z-index:30;flex-wrap:nowrap!important;gap:12px!important;padding:6px 24px!important;background:rgba(246,244,238,.96);border-bottom:1px solid #E7E1D0}
+header>a>span{display:none}
+header nav{flex-wrap:nowrap!important;gap:20px!important;letter-spacing:2px!important;white-space:nowrap}
+section{padding-top:44px!important}
+#listas-grilla{grid-template-columns:1fr 1fr!important;gap:30px 12px!important;padding-top:24px!important}
+#listas-grilla>a>*:nth-child(3){font-size:15px!important;line-height:1.25!important}
+#listas-tipos{position:sticky;top:57px;z-index:20;flex-wrap:nowrap!important;gap:0 22px!important;overflow-x:auto;white-space:nowrap;margin:0 -24px;padding:0 24px!important;background:rgba(246,244,238,.96);border-bottom:1px solid #E7E1D0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#listas-tipos::-webkit-scrollbar{display:none}
+#listas-tipos button{flex:none}
+#listas-tipos+#listas-grilla{border-top:0!important}
+footer{padding-top:88px!important}
+}
 @media (prefers-reduced-motion: reduce){.ph{transition:none}}
 </style>
 </head>
@@ -138,6 +151,9 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
         cards.forEach(function (a) { a.style.display = (!t || a.getAttribute('data-tipo') === t) ? 'flex' : 'none'; });
         Array.prototype.forEach.call(bar.children, function (x) { x.style.fontWeight = '400'; x.style.borderBottomColor = 'transparent'; x.setAttribute('aria-pressed', 'false'); });
         b.style.fontWeight = '500'; b.style.borderBottomColor = '#2A2218'; b.setAttribute('aria-pressed', 'true');
+        var tope = grid.getBoundingClientRect().top;
+        if (tope < 0) window.scrollTo(0, window.pageYOffset + tope - 120);
+        if (b.scrollIntoView && bar.scrollWidth > bar.clientWidth) b.scrollIntoView({ block: 'nearest', inline: 'center' });
       });
       bar.appendChild(b); return b;
     }
