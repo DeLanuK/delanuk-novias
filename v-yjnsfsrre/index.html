@@ -40,19 +40,49 @@ a:hover{color:#5E6440}
 .ph.out{opacity:0}
 button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3px}
 @media (prefers-reduced-motion: reduce){.ph{transition:none}}
+.hb{display:none}
+.hb-b{display:none}
+.mn-m{display:none}
+@media (max-width:700px){
+.hd{position:sticky;top:0;z-index:30;flex-wrap:nowrap!important;padding:6px 24px!important;background:rgba(246,244,238,.96);border-bottom:1px solid #E7E1D0}
+.mn-m{display:block}
+section{padding-top:96px!important;scroll-margin-top:52px}
+section#inicio{padding-top:28px!important}
+.h-par{grid-template-columns:1fr 1fr!important;gap:10px!important}
+.c-txt{text-align:left!important}
+.c-foto{flex:1 1 100%!important;aspect-ratio:4/5!important}
+.hb{display:flex;flex:none;width:44px;height:44px;align-items:center;justify-content:center;border:0;background:transparent;color:#2A2218;padding:0;margin-right:-10px;cursor:pointer}
+.hb[aria-expanded="true"] .hb-a{display:none}
+.hb[aria-expanded="true"] .hb-b{display:inline}
+.mn{display:none!important;position:absolute;left:0;right:0;top:100%;z-index:20;background:#F6F4EE;border-bottom:1px solid #D8D1BE;padding:6px 24px 18px;flex-direction:column;flex-wrap:nowrap!important;gap:0!important;font-size:11px!important;text-align:center;box-shadow:0 18px 30px -22px rgba(42,34,24,.35)}
+.mn.open{display:flex!important}
+.mn a{padding:17px 0!important;border-top:1px solid #E7E1D0}
+.mn a:first-child{border-top:0}
+.h-col{align-items:center;text-align:center;gap:28px!important}
+.h-logo{margin:8px auto 0!important;width:min(250px,72%)!important}
+.h-tag{text-align:center!important;max-width:310px!important;margin:0 auto!important;letter-spacing:1.4px!important}
+.h-temp{flex-direction:column;flex-wrap:nowrap!important;align-items:center!important;text-align:center;gap:20px!important;padding:60px 0 52px!important}
+.h-temp>div{margin:0!important;text-align:center!important;justify-content:center}
+.h-links{flex-direction:column;flex-wrap:nowrap!important;align-items:center;gap:6px!important;padding-top:32px!important}
+}
 </style>
 </head>
 <body>
 <div style="background: #F6F4EE; color: #2A2218; font-family: Jost, Helvetica, Arial, sans-serif; font-weight: 300; font-size: 15px; line-height: 1.7;">
 
 <!-- CABECERA -->
-<header style="max-width: 1160px; margin: 0 auto; padding: 28px 24px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px;">
+<header class="hd" style="max-width: 1160px; margin: 0 auto; padding: 28px 24px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px;">
 <a href="#inicio" style="display: flex; align-items: center; gap: 14px; min-height: 44px;"><span style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #6B6357; font-weight: 400;">Piezas a medida</span></a>
-<nav style="display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 400;">
+<button type="button" class="hb" id="hb" aria-label="Abrir el menú" aria-expanded="false" aria-controls="menu"><svg aria-hidden="true" width="24" height="16" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1"><path class="hb-a" d="M1 2h22M1 8h22M1 14h22"></path><path class="hb-b" d="M4 0l16 16M20 0L4 16"></path></svg></button>
+<nav class="mn" id="menu" style="display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 400;">
 <a href="#servicios" style="padding: 14px 0;">Servicios</a>
 <a href="#fecha" style="padding: 14px 0;">Para tu fecha</a>
+<a class="mn-m" href="#coleccion" style="padding: 14px 0;">De colección</a>
+<a class="mn-m" href="#medida" style="padding: 14px 0;">A tu medida</a>
+<a class="mn-m" href="#cero" style="padding: 14px 0;">Desde cero</a>
 <a href="#novias" style="padding: 14px 0;">Novias reales</a>
 <a href="#preguntas" style="padding: 14px 0;">Preguntas</a>
+<a class="mn-m" href="#cita" style="padding: 14px 0;">Agendar cita</a>
 <a href="https://wa.me/5493518131088?text=Hola%21%20Vi%20la%20p%C3%A1gina%20de%20piezas%20a%20medida%20y%20quiero%20hacer%20una%20consulta." target="_blank" rel="noopener" style="padding: 14px 0; font-weight: 500;">Consultar</a>
 </nav>
 </header>
@@ -60,14 +90,14 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
 <!-- INICIO -->
 <section id="inicio" data-auto="6000" data-gal="[[{&quot;src&quot;:&quot;img/857438a7a02022c31e4b03cb0e3d1206.jpg&quot;,&quot;alt&quot;:&quot;Vincha de perlas y aro de perla&quot;,&quot;cap&quot;:&quot;Vincha y aro de perla&quot;},{&quot;src&quot;:&quot;img/3926fab5cc9ddb657791ddd7d5815b52.jpg&quot;,&quot;alt&quot;:&quot;Novia en la ventana a contraluz&quot;,&quot;cap&quot;:&quot;En la ventana&quot;}],[{&quot;src&quot;:&quot;img/ad3e74ed91aee57d6f02b001e33fea86.jpg&quot;,&quot;alt&quot;:&quot;Novia con velo y vincha de perlas junto a la ventana&quot;,&quot;cap&quot;:&quot;Velo y vincha&quot;},{&quot;src&quot;:&quot;img/90fe915bbca865efc3771007fc6de0c7.jpg&quot;,&quot;alt&quot;:&quot;Detalle de aro dorado con perlas&quot;,&quot;cap&quot;:&quot;Aro dorado con perlas&quot;}],[{&quot;src&quot;:&quot;img/0eb3da1765000858aaa909d4d52686f0.jpg&quot;,&quot;alt&quot;:&quot;Peineta dorada en el rodete, frente al espejo&quot;,&quot;cap&quot;:&quot;Peineta dorada&quot;},{&quot;src&quot;:&quot;img/39c19b1affda0c456d96c1669568a7da.jpg&quot;,&quot;alt&quot;:&quot;Collar de espalda con perlas y aros de perla&quot;,&quot;cap&quot;:&quot;Collar de espalda&quot;}]]" style="max-width: 1160px; margin: 0 auto; padding: 56px 24px 0;">
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 32px 48px; align-items: stretch;">
-<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 40px;">
-<img src="img/f1523249a5fcb2e54a89eae8928cf41b.svg" alt="De LanuK" style="display: block; width: clamp(220px, 30vw, 380px); max-width: 100%; height: auto; margin-top: 8px;">
-<p style="margin: 0; max-width: 300px; font-size: 11px; line-height: 1.9; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 400; text-align: justify;">Tu pieza a medida, hecha artesanalmente y pensada para tu evento especial. Diseño propio, trabajo de taller y materiales nobles, en cada detalle.</p>
+<div class="h-col" style="display: flex; flex-direction: column; justify-content: space-between; gap: 40px;">
+<img class="h-logo" src="img/f1523249a5fcb2e54a89eae8928cf41b.svg" alt="De LanuK" style="display: block; width: clamp(220px, 30vw, 380px); max-width: 100%; height: auto; margin-top: 8px;">
+<p class="h-tag" style="margin: 0; max-width: 300px; font-size: 11px; line-height: 1.9; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 400; text-align: justify;">Tu pieza a medida, hecha artesanalmente y pensada para tu evento especial. Diseño propio, trabajo de taller y materiales nobles, en cada detalle.</p>
 </div>
 <div style="justify-self: end; width: 100%; max-width: 520px; aspect-ratio: 4 / 5; overflow: hidden; background: #E7E1D0;"><img class="ph" src="img/f70f959e14a320c5c825ee7a6da3b7e1.jpg" alt="Novia en la puerta con vincha de perlas"></div>
 </div>
 
-<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; padding: 88px 0 80px;">
+<div class="h-temp" style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; padding: 88px 0 80px;">
 <div style="display: flex; gap: 48px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 400;"><span>2026 – 2027</span><span>Temporada</span></div>
 <div style="text-align: right; margin-left: auto;">
 <div style="font-size: 11px; letter-spacing: 4px; text-transform: uppercase; font-weight: 400; word-spacing: 14px;">Novias Madrinas Invitadas</div>
@@ -75,7 +105,7 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
 </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px;">
+<div class="h-par" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px;">
 <figure style="margin: 0;"><div style="aspect-ratio: 4 / 5; overflow: hidden; background: #E7E1D0;"><img class="ph" loading="lazy" data-slot="0" src="img/857438a7a02022c31e4b03cb0e3d1206.jpg" alt="Vincha de perlas y aro de perla"></div></figure>
 <figure style="margin: 0;"><div style="aspect-ratio: 4 / 5; overflow: hidden; background: #E7E1D0;"><img class="ph" loading="lazy" data-slot="1" src="img/3926fab5cc9ddb657791ddd7d5815b52.jpg" alt="Novia en la ventana a contraluz"></div></figure>
 </div>
@@ -86,7 +116,7 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
 <button type="button" aria-label="Fotos siguientes" data-dir="1" style="width: 44px; height: 44px; border: 0; background: transparent; color: #2A2218; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;"><svg aria-hidden="true" width="22" height="10" viewBox="0 0 22 10" fill="none" stroke="currentColor" stroke-width="1"><path d="M0 5h21M17 1l4 4-4 4"></path></svg></button>
 </div>
 
-<div style="display: flex; flex-wrap: wrap; gap: 16px 40px; padding-top: 44px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 500;">
+<div class="h-links" style="display: flex; flex-wrap: wrap; gap: 16px 40px; padding-top: 44px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 500;">
 <a class="lk" href="#servicios" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box;">Ver los cuatro servicios</a>
 <a class="lk" href="https://wa.me/5493518131088?text=Hola%21%20Vi%20la%20p%C3%A1gina%20de%20piezas%20a%20medida%20y%20quiero%20hacer%20una%20consulta." target="_blank" rel="noopener" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box;">Consultar por WhatsApp</a>
 </div>
@@ -361,14 +391,14 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
 <div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
 <div style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #6B6357; font-weight: 400;">Cita · A tu medida y Desde cero</div>
 <h2 style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: clamp(36px, 4.6vw, 56px); line-height: 1.04; text-transform: uppercase; letter-spacing: 0.01em; color: #5A4A3A;">Empecemos<br>por tu cita</h2>
-<p style="margin: 0; max-width: 440px; color: #4A4136; text-align: justify;">Si tu pieza lleva cambios o es un diseño propio, el primer paso es una cita de 30 minutos, presencial en nuestros locales de Tejeda, Cañitas Soho o Villa Allende, o por videollamada. Se reserva con una seña de $20.000: si concretamos tu pedido, se descuenta del total; si no, no se devuelve. Antes de empezar confirmamos pieza, presupuesto y fecha de entrega por escrito.</p>
+<p class="c-txt" style="margin: 0; max-width: 440px; color: #4A4136; text-align: justify;">Si tu pieza lleva cambios o es un diseño propio, el primer paso es una cita de 30 minutos, presencial en nuestros locales de Tejeda, Cañitas Soho o Villa Allende, o por videollamada. Se reserva con una seña de $20.000: si concretamos tu pedido, se descuenta del total; si no, no se devuelve. Antes de empezar confirmamos pieza, presupuesto y fecha de entrega por escrito.</p>
 <p style="margin: 0; max-width: 440px; font-size: 13px; color: #6B6357;">Para tu fecha y De colección se piden sin cita.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 16px 40px; padding-top: 12px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 500;">
 <a class="lk" href="https://calendly.com/delanuknovias/30min" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box;">Agendar cita</a>
 <a class="lk" href="https://wa.me/5493518131088?text=Hola%21%20Vi%20la%20p%C3%A1gina%20de%20piezas%20a%20medida%20y%20quiero%20hacer%20una%20consulta." target="_blank" rel="noopener" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box;">Consultar por WhatsApp</a>
 </div>
 </div>
-<div style="flex: 0 1 320px; min-width: 0; aspect-ratio: 9 / 16; overflow: hidden; background: #E7E1D0;"><img class="ph" loading="lazy" src="img/054b60369942791a702426b364c5377a.jpg" alt="Novia con peinado recogido y aro de perla"></div>
+<div class="c-foto" style="flex: 0 1 320px; min-width: 0; aspect-ratio: 9 / 16; overflow: hidden; background: #E7E1D0;"><img class="ph" loading="lazy" src="img/054b60369942791a702426b364c5377a.jpg" alt="Novia con peinado recogido y aro de perla"></div>
 </div>
 </section>
 
@@ -455,6 +485,15 @@ button:focus-visible,a:focus-visible{outline:1px solid #2A2218;outline-offset:3p
     else if (/(catalogo|coleccion)\/?$/.test(h)) ev('catalogo', /coleccion/.test(h) ? 'de-coleccion' : 'para-tu-fecha');
     else if (h.indexOf('delanuk.com') > -1 && h.indexOf('amedida') < 0) ev('tienda');
   }, true);
+})();
+</script>
+<script>
+(function(){var b=document.getElementById('hb'),m=document.getElementById('menu');if(!b||!m)return;
+function set(o){m.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');b.setAttribute('aria-label',o?'Cerrar el menú':'Abrir el menú');}
+b.addEventListener('click',function(e){e.stopPropagation();set(!m.classList.contains('open'));});
+m.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+document.addEventListener('click',function(e){if(!m.contains(e.target))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
 })();
 </script>
 </body>
