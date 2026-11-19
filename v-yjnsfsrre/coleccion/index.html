@@ -178,7 +178,7 @@ footer{padding-top:88px!important}
         if (t[2]) t[2].textContent = material(partes.slice(1).join(' - '));
       }
       if (p.precio && t[3]) t[3].textContent = precio(p.precio);
-      if (COL && p.hay && p.url) {
+      if (COL && p.hay && p.url && /^https:\/\//i.test(p.url)) {
         a.href = p.url + (p.url.indexOf('?') < 0 ? '?' : '&') + 'utm_source=amedida&utm_medium=referral&utm_campaign=de-coleccion';
         a.target = '_blank'; a.rel = 'noopener';
         if (t[4]) t[4].textContent = 'Ver en la tienda';
